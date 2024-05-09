@@ -61,7 +61,7 @@ class Attribute:
         sample = self.rng.normal(value, value * self.stddev_perc_of_mean)
 
         if "min" in options and "max" in options:
-            return np.clip(sample, options["min"], options["max"])
+            sample = np.clip(sample, options["min"], options["max"])
 
         return options["type"](sample)
 

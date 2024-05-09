@@ -1,11 +1,8 @@
 import os
 
 import datasets
-from flwr_datasets import FederatedDataset
-from datasets import Dataset
-from torch.utils.data import DataLoader
-import numpy as np
 from simulation.constants import NUM_CLIENTS
+from torchvision.transforms import ToTensor, Normalize, Compose
 
 
 DATASET = "cifar10"
@@ -25,8 +22,17 @@ print("[DATA] Client training examples: ", len(train_set))
 centralized_test_set = dataset["test"]
 print("[DATA] Centralized testset examples: ", len(centralized_test_set))
 
-train_set.shuffle(seed=1010)
-centralized_test_set.shuffle(seed=1010)
+
+def apply_transforms(batch):
+    transform = Compose([ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+    batch["img"] = [transform(img) for img in batch["img"]]
+    return batch
+
+
+train_set = train_set.shuffle(seed=1010).with_transform(apply_transforms)
+centralized_test_set = centralized_test_set.shuffle(seed=1010).with_transform(
+    apply_transforms
+)
 
 
 def get_data_for_client(cid: int):

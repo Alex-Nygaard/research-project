@@ -10,7 +10,7 @@ DEVICE = torch.device(torch_device)
 
 NUM_ROUNDS = 10
 
-NUM_CLIENTS = 100
+NUM_CLIENTS = 2
 PERC_DROPOUT = 0.5
 BATCH_SIZE = 32
 LOCAL_EPOCHS = 3

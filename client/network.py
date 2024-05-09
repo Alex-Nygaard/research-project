@@ -1,9 +1,10 @@
+from typing import List
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from collections import OrderedDict
 from datasets.utils.logging import disable_progress_bar
-from torchvision.transforms import ToTensor, Normalize, Compose
 from simulation.constants import DEVICE
 
 disable_progress_bar()
@@ -40,6 +41,7 @@ def train(net, trainloader, epochs):
     """Train the model on the training set."""
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+
     for _ in range(epochs):
         for batch in trainloader:
             images = batch["img"]
@@ -64,10 +66,10 @@ def test(net, testloader):
     return loss, accuracy
 
 
-def apply_transforms(batch):
-    """Apply transforms to the partition from FederatedDataset."""
-    pytorch_transforms = Compose(
-        [ToTensor(), Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
-    )
-    batch["img"] = [pytorch_transforms(img) for img in batch["img"]]
-    return batch
+# def set_parameters(model: torch.nn.ModuleList, params: List[fl.common.NDArrays]):
+#     print("aaaaaaa", model.state_dict().keys())
+#     params_dict = zip(model.state_dict().keys(), params)
+#     print("xxxxx", params)
+#     state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
+#     print("yyyyyyy", state_dict.keys())
+#     model.load_state_dict(state_dict, strict=True)

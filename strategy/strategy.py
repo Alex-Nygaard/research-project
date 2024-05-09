@@ -8,8 +8,9 @@ from flwr.server.strategy.aggregate import weighted_loss_avg
 import flwr as fl
 from datasets.utils.logging import disable_progress_bar
 
-from simulation.client import Net, train, test, apply_transforms
-from simulation.client import DEVICE
+from client.network import Net, test
+from client.client import fit_config
+from config.constants import DEVICE
 from data.load_data import centralized_test_set
 from logger.logger import get_logger
 
@@ -64,13 +65,10 @@ def evaluate_fn(
     device = torch.device(DEVICE)
 
     model = Net()
-    model.set_parameters(parameters)
     model.to(device)
+    model.set_parameters(parameters)
 
-    # Apply transform to dataset
-    testset = centralized_test_set.with_transform(apply_transforms)
-
-    testloader = DataLoader(testset, batch_size=32)
+    testloader = DataLoader(centralized_test_set, batch_size=32)
     loss, accuracy = test(model, testloader)
 
     logger.info(
@@ -115,4 +113,5 @@ def get_strategy():
         fraction_evaluate=fraction_evaluate,
         evaluate_fn=evaluate_fn,
         evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
+        on_fit_config_fn=fit_config,
     )

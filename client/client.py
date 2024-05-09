@@ -1,13 +1,7 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import numpy as np
-from collections import OrderedDict
 from torch.utils.data import DataLoader
 from flwr.client import NumPyClient
 from datasets.utils.logging import disable_progress_bar
-from torchvision.transforms import ToTensor, Normalize, Compose
-from simulation.data import ClientData
+
 from simulation.constants import DEVICE
 from client.network import Net, train, test
 from data.load_data import get_data_for_client
@@ -36,24 +30,29 @@ class FlowerClient(NumPyClient):
         ).get()
 
         self.full_dataset = get_data_for_client(cid)
-        self.train_set, self.test_set = self.full_dataset.train_test_split(
-            test_size=0.15
-        )
-        self.train_loader = DataLoader(
-            self.train_set, batch_size=self.batch_size, shuffle=True
-        )
-        self.test_loader = DataLoader(self.test_set, batch_size=self.batch_size)
+        split = self.full_dataset.train_test_split(test_size=0.15)
+        self.train_set, self.test_set = split["train"], split["test"]
 
     def fit(self, parameters, config):
         self.net.set_parameters(parameters)
         current_round = config["current_round"]
-        train(self.net, self.train_loader, epochs=self.local_epochs)
-        return self.net.get_parameters(config={}), len(self.train_loader), {}
+        train_loader = DataLoader(
+            self.train_set, batch_size=self.batch_size, shuffle=True
+        )
+        train(self.net, train_loader, epochs=self.local_epochs)
+        return self.net.get_parameters(config={}), len(train_loader), {}
 
     def evaluate(self, parameters, config):
         self.net.set_parameters(parameters)
-        loss, accuracy = test(self.net, self.test_loader)
-        return loss, len(self.test_loader), {"loss": loss, "accuracy": accuracy}
+        test_loader = DataLoader(self.test_set, batch_size=self.batch_size)
+        loss, accuracy = test(self.net, test_loader)
+        return loss, len(test_loader), {"loss": loss, "accuracy": accuracy}
+
+    def set_parameters(self, parameters):
+        self.net.set_parameters(parameters)
+
+    def get_parameters(self, config):
+        return self.net.get_parameters(config=config)
 
 
 def fit_config(server_round: int):

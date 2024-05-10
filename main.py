@@ -12,7 +12,9 @@ logger = get_logger("main")
 async def main(option: str):
     logger.info("Running main with option=%s", option)
     if option == "simulation":
-        pass
+        simulation_task = run_simulation()
+        logger.info("Simulation task started.")
+        await asyncio.gather(simulation_task)
     elif option == "deployment":
         server_task = run_server()
         logger.info("Server task started. Waiting 5 seconds to start clients...")
@@ -31,6 +33,17 @@ async def run_client(partition_id):
 async def run_server():
     # Prepare the command
     cmd = ["python", "deploy_server.py"]
+    process = await asyncio.create_subprocess_exec(*cmd, cwd=os.getcwd())
+    await process.wait()
+
+
+async def run_simulation():
+    cmd = [
+        "python",
+        "run_simulation.py",
+        "--client_variation=mid",
+        "--data_variation=mid",
+    ]
     process = await asyncio.create_subprocess_exec(*cmd, cwd=os.getcwd())
     await process.wait()
 

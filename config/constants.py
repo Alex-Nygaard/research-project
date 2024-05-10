@@ -8,12 +8,12 @@ elif torch.backends.mps.is_available():
     torch_device = "mps"
 DEVICE = torch.device(torch_device)
 
-NUM_ROUNDS = 10
+NUM_ROUNDS = 2
 
-NUM_CLIENTS = 2
+NUM_CLIENTS = 3
 PERC_DROPOUT = 0.5
 BATCH_SIZE = 32
-LOCAL_EPOCHS = 3
+LOCAL_EPOCHS = 5
 NUM_DATAPOINTS = 200
 PERC_NEW_DATA = 0.2
 PERC_MISSING_LABELS = 0.2

@@ -1,17 +1,8 @@
-import asyncio
-import os
 import flwr as fl
 import argparse
 
 from client.client import FlowerClient
-from logger.logger import get_logger, LOG_DIR
-
-
-# async def run_client(partition_id):
-#     cmd = ["python", "client/run.py", f"--partition-id={partition_id}"]
-#     print("creating client with cwd: ", os.getcwd())
-#     process = await asyncio.create_subprocess_exec(*cmd, cwd=os.getcwd())
-#     await process.wait()
+from logger.logger import get_logger
 
 
 if __name__ == "__main__":
@@ -20,7 +11,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     cid = args.partition_id
 
-    logger = get_logger(f"client{cid}.run")
+    logger = get_logger(f"client-{cid}.deploy")
 
     logger.info(f"Starting client with partition_id={cid}")
 

@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from collections import OrderedDict
 from datasets.utils.logging import disable_progress_bar
-from simulation.constants import DEVICE
+from config.constants import DEVICE
 
 disable_progress_bar()
 

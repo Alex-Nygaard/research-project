@@ -8,13 +8,6 @@ from logger.logger import get_logger
 logger = get_logger("server.run")
 
 
-# async def run_server():
-#     # Prepare the command
-#     cmd = ["python", "server/run.py"]
-#     process = await asyncio.create_subprocess_exec(*cmd, cwd=os.getcwd())
-#     await process.wait()
-
-
 if __name__ == "__main__":
     logger.info("Starting server.")
     logger.info(f"NUM_ROUNDS: {NUM_ROUNDS}")

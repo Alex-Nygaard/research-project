@@ -101,8 +101,8 @@ def evaluate_metrics_aggregation_fn(metrics: List[Tuple[int, Dict[str, Scalar]]]
 
 
 def get_strategy():
-    fraction_fit = 1.0
-    fraction_evaluate = 1.0
+    fraction_fit = 0.5
+    fraction_evaluate = 0.5
     logger.info(
         "Using custom strategy. (fraction_fit=%s, fraction_evaluate=%s)",
         fraction_fit,

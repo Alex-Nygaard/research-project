@@ -2,7 +2,7 @@ from torch.utils.data import DataLoader
 from flwr.client import NumPyClient
 from datasets.utils.logging import disable_progress_bar
 
-from simulation.constants import DEVICE
+from config.constants import DEVICE
 from client.network import Net, train, test
 from data.load_data import get_data_for_client
 from client.attribute import Attribute
@@ -61,3 +61,13 @@ def fit_config(server_round: int):
         "current_round": server_round,
     }
     return config
+
+
+def get_client_fn(
+    client_variation: str = "mid",
+    data_variation: str = "mid",
+):
+    def client_fn(cid: str):
+        return FlowerClient(int(cid), client_variation, data_variation).to_client()
+
+    return client_fn

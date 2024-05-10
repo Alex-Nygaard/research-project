@@ -1,7 +1,7 @@
 import os
 
 import datasets
-from simulation.constants import NUM_CLIENTS
+from config.constants import NUM_CLIENTS
 from torchvision.transforms import ToTensor, Normalize, Compose
 
 

@@ -2,11 +2,20 @@ import os
 import asyncio
 import argparse
 from time import sleep
+import flwr as fl
 
-from config.constants import NUM_CLIENTS
+from utils.run_counter import increment_run_counter
+
+run_count = increment_run_counter()
+
 from logger.logger import get_logger
+from config.constants import NUM_CLIENTS, LOG_DIR
+
 
 logger = get_logger("main")
+fl.common.logger.configure(
+    identifier="FlowerLog", filename=os.path.join(LOG_DIR, "flwr.log")
+)
 
 
 async def main(option: str):
@@ -18,7 +27,7 @@ async def main(option: str):
     elif option == "deployment":
         server_task = run_server()
         logger.info("Server task started. Waiting 5 seconds to start clients...")
-        sleep(10)
+        sleep(5)
         client_tasks = [run_client(i) for i in range(NUM_CLIENTS)]
         logger.info("Client tasks (%s) started.", NUM_CLIENTS)
         await asyncio.gather(server_task, *client_tasks)

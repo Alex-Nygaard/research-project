@@ -1,19 +1,13 @@
+import os
 import flwr as fl
 import argparse
 from strategy.strategy import get_strategy
-from config.constants import NUM_ROUNDS
-from logger.logger import get_logger
 
-from client.client import get_client_fn, fit_config
-from strategy.strategy import (
-    FedCustom,
-    evaluate_fn,
-    evaluate_metrics_aggregation_fn,
-)
-from config.constants import NUM_ROUNDS, NUM_CLIENTS
+from client.client import get_client_fn
+from config.constants import NUM_ROUNDS, NUM_CLIENTS, LOG_DIR
 from logger.logger import get_logger
+from data.save_results import save_history
 
-logger = get_logger("simulation.run")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Running a simulation.")
@@ -34,20 +28,23 @@ if __name__ == "__main__":
     data_variation = args.data_variation
     client_variation = args.client_variation
 
+    logger = get_logger("simulation.run")
+    fl.common.logger.configure(
+        identifier="FlowerLog", filename=os.path.join(LOG_DIR, "flwr.log")
+    )
+
     logger.info(
         "Running simulation with client variation: %s and data variation: %s",
         client_variation,
         data_variation,
     )
 
-    fl.simulation.start_simulation(
+    history = fl.simulation.start_simulation(
         num_clients=NUM_CLIENTS,
         config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
         client_fn=get_client_fn(client_variation, data_variation),
-        strategy=FedCustom(
-            evaluate_fn=evaluate_fn,
-            evaluate_metrics_aggregation_fn=evaluate_metrics_aggregation_fn,
-            on_fit_config_fn=fit_config,
-        ),
+        strategy=get_strategy(),
         # TODO ray_init_args=ray_init_args,
     )
+
+    save_history(history)

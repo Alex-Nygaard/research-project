@@ -162,3 +162,5 @@ cython_debug/
 # Other
 *.csv
 **/storage/*
+*.json
+run_counter.txt

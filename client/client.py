@@ -3,7 +3,7 @@ from flwr.client import NumPyClient
 from datasets.utils.logging import disable_progress_bar
 
 from config.constants import DEVICE
-from client.network import Net, train, test
+from client.network import Net, train, test, eval_learning
 from data.load_data import get_data_for_client
 from client.attribute import Attribute
 
@@ -35,6 +35,7 @@ class FlowerClient(NumPyClient):
 
     def fit(self, parameters, config):
         self.net.set_parameters(parameters)
+        self.net.train()
         current_round = config["current_round"]
         train_loader = DataLoader(
             self.train_set, batch_size=self.batch_size, shuffle=True
@@ -46,7 +47,17 @@ class FlowerClient(NumPyClient):
         self.net.set_parameters(parameters)
         test_loader = DataLoader(self.test_set, batch_size=self.batch_size)
         loss, accuracy = test(self.net, test_loader)
-        return loss, len(test_loader), {"loss": loss, "accuracy": accuracy}
+
+        acc, rec, prec, f1 = eval_learning(self.net, test_loader)
+        output_dict = {
+            "accuracy": accuracy,
+            "acc": acc,
+            "rec": rec,
+            "prec": prec,
+            "f1": f1,
+        }
+
+        return loss, len(test_loader), output_dict
 
     def set_parameters(self, parameters):
         self.net.set_parameters(parameters)
@@ -56,7 +67,6 @@ class FlowerClient(NumPyClient):
 
 
 def fit_config(server_round: int):
-    """Return training configuration dict for each round."""
     config = {
         "current_round": server_round,
     }

@@ -1,8 +1,10 @@
+import os
 import flwr as fl
 import argparse
 
 from client.client import FlowerClient
 from logger.logger import get_logger
+from config.constants import LOG_DIR
 
 
 if __name__ == "__main__":
@@ -12,6 +14,9 @@ if __name__ == "__main__":
     cid = args.partition_id
 
     logger = get_logger(f"client-{cid}.deploy")
+    fl.common.logger.configure(
+        identifier="FlowerLog", filename=os.path.join(LOG_DIR, "flwr.log")
+    )
 
     logger.info(f"Starting client with partition_id={cid}")
 

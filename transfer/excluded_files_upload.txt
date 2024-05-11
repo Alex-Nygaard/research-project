@@ -1,0 +1,11 @@
+venv
+.git
+.gitignore
+.idea
+logs
+from-delftblue
+transfer
+.DS_Store
+**/storage/*
+**/__pycache__/*
+*.pyc

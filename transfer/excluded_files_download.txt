@@ -1,0 +1,11 @@
+venv
+.git
+.gitignore
+.idea
+*.arrow
+*.pyc
+**/storage/*
+*.py
+*.sh
+
+

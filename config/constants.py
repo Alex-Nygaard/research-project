@@ -15,9 +15,9 @@ DEVICE = torch.device(torch_device)
 DATASET = "cifar10"
 DATA_SAVE_PATH = "data/storage"
 
-NUM_ROUNDS = 2
+NUM_ROUNDS = 50
 
-NUM_CLIENTS = 3
+NUM_CLIENTS = 64
 PERC_DROPOUT = 0.5
 BATCH_SIZE = 32
 LOCAL_EPOCHS = 5

@@ -44,7 +44,10 @@ if __name__ == "__main__":
         config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
         client_fn=get_client_fn(client_variation, data_variation),
         strategy=get_strategy(),
-        # TODO ray_init_args=ray_init_args,
+        ray_init_args={
+            "num_cpus": os.environ.get("SLURM_CPUS_PER_TASK", 8),
+            "num_gpus": os.environ.get("SLURM_GPUS", 0),
+        },
     )
 
     save_history(history)

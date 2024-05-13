@@ -2,10 +2,10 @@ venv
 .git
 .gitignore
 .idea
-logs
+logs/run*
 from-delftblue
 transfer
 .DS_Store
 **/storage/*
-**/__pycache__/*
+**/__pycache__
 *.pyc

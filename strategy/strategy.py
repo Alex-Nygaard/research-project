@@ -35,6 +35,7 @@ def evaluate_fn(
     model = Net()
     model.to(device)
     model.set_parameters(parameters)
+    model.eval()
 
     test_loader = DataLoader(centralized_test_set, batch_size=32)
     loss, accuracy = test(model, test_loader)

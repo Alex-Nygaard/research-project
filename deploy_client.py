@@ -2,7 +2,7 @@ import os
 import flwr as fl
 import argparse
 
-from client.client import FlowerClient
+from client.client import get_client_fn
 from logger.logger import get_logger
 from config.constants import LOG_DIR
 
@@ -10,8 +10,13 @@ from config.constants import LOG_DIR
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Running a client.")
     parser.add_argument("--partition-id", type=int, help="Partition ID", required=True)
+    parser.add_argument("--client_variation", type=str, help="Client variation")
+    parser.add_argument("--data_variation", type=str, help="Client variation")
+
     args = parser.parse_args()
     cid = args.partition_id
+    client_variation = args.client_variation
+    data_variation = args.data_variation
 
     logger = get_logger(f"client-{cid}.deploy")
     fl.common.logger.configure(
@@ -22,5 +27,7 @@ if __name__ == "__main__":
 
     fl.client.start_client(
         server_address="127.0.0.1:18080",
-        client=FlowerClient(cid).to_client(),
+        client_fn=get_client_fn(
+            client_variation=client_variation, data_variation=data_variation
+        ),
     )

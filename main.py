@@ -5,9 +5,6 @@ from time import sleep
 import flwr as fl
 
 from utils.run_counter import increment_run_counter
-
-run_count = increment_run_counter()
-
 from logger.logger import get_logger
 from config.constants import NUM_CLIENTS, LOG_DIR
 
@@ -18,7 +15,7 @@ fl.common.logger.configure(
 )
 
 
-async def main(option: str):
+async def main(option: str, client_variation: str, data_variation: str):
     logger.info("Running main with option=%s", option)
     if option == "simulation":
         simulation_task = run_simulation()
@@ -32,9 +29,17 @@ async def main(option: str):
         logger.info("Client tasks (%s) started.", NUM_CLIENTS)
         await asyncio.gather(server_task, *client_tasks)
 
+    increment_run_counter()
+
 
 async def run_client(partition_id):
-    cmd = ["python", "deploy_client.py", f"--partition-id={partition_id}"]
+    cmd = [
+        "python",
+        "deploy_client.py",
+        f"--partition-id={partition_id}",
+        "--client_variation=mid",
+        "--data_variation=mid",
+    ]
     process = await asyncio.create_subprocess_exec(*cmd, cwd=os.getcwd())
     await process.wait()
 
@@ -67,7 +72,22 @@ if __name__ == "__main__":
         choices=["simulation", "deployment"],
         help="Either 'simulation' or 'deployment'",
     )
+    parser.add_argument(
+        "--client_variation",
+        type=str,
+        choices=["low", "mid", "high"],
+        help="Client attribute variation.",
+    )
+    parser.add_argument(
+        "--data_variation",
+        type=str,
+        choices=["low", "mid", "high"],
+        help="Data attribute variation.",
+    )
+
     args = parser.parse_args()
     option = args.option
+    client_variation = args.client_variation
+    data_variation = args.data_variation
 
-    asyncio.run(main(option))
+    asyncio.run(main(option, client_variation, data_variation))

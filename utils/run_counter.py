@@ -1,4 +1,9 @@
-FILENAME = "run_counter.txt"
+import os
+
+FILENAME = "logs/run_counter.txt"
+if not os.path.exists(FILENAME):
+    with open(FILENAME, "w") as file:
+        file.write("0")
 
 
 def increment_run_counter() -> int:

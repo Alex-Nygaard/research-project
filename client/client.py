@@ -1,8 +1,9 @@
+import os
 from torch.utils.data import DataLoader
 from flwr.client import NumPyClient
 from datasets.utils.logging import disable_progress_bar
 
-from config.constants import DEVICE
+from config.constants import DEVICE, LOG_DIR
 from client.network import Net, train, test, eval_learning
 from data.load_data import get_data_for_client
 from client.attribute import Attribute
@@ -45,6 +46,7 @@ class FlowerClient(NumPyClient):
 
     def evaluate(self, parameters, config):
         self.net.set_parameters(parameters)
+        self.net.eval()
         test_loader = DataLoader(self.test_set, batch_size=self.batch_size)
         loss, accuracy = test(self.net, test_loader)
 
@@ -65,6 +67,21 @@ class FlowerClient(NumPyClient):
     def get_parameters(self, config):
         return self.net.get_parameters(config=config)
 
+    def write_to_csv(self, path, filename):
+        data = [
+            self.cid,
+            self.batch_size,
+            self.local_epochs,
+            self.num_data_points,
+            self.perc_new_data,
+            self.perc_missing_labels,
+            len(self.train_set),
+            len(self.test_set),
+        ]
+        data = [str(d) for d in data]
+        with open(os.path.join(path, filename), "a") as file:
+            file.write(",".join(data) + "\n")
+
 
 def fit_config(server_round: int):
     config = {
@@ -77,7 +94,15 @@ def get_client_fn(
     client_variation: str = "mid",
     data_variation: str = "mid",
 ):
+
+    clients: dict[str, FlowerClient] = {}
+
     def client_fn(cid: str):
-        return FlowerClient(int(cid), client_variation, data_variation).to_client()
+        if cid in clients:
+            return clients[cid].to_client()
+        else:
+            clients[cid] = FlowerClient(int(cid), client_variation, data_variation)
+            clients[cid].write_to_csv(LOG_DIR, "clients.csv")
+            return clients[cid].to_client()
 
     return client_fn

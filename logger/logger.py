@@ -2,8 +2,6 @@ import os
 import logging
 from config.constants import LOG_DIR
 
-os.makedirs(LOG_DIR, exist_ok=True)
-
 
 def get_logger(name):
     logger = logging.getLogger(name)

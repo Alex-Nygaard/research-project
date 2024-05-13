@@ -8,6 +8,7 @@ class Attribute:
     stddev_perc_of_mean = 0.15
 
     options = {
+        "cid": {"type": int},
         "num_clients": {"low": 50, "mid": 100, "high": 150, "type": int},
         "batch_size": {"low": 16, "mid": 32, "high": 64, "type": int},
         "local_epochs": {
@@ -32,7 +33,7 @@ class Attribute:
             "high": 0.2,
             "min": 0.0,
             "max": 0.3,
-            "type": float,
+            "type": lambda x: round(float(x), 2),
         },
         "perc_missing_labels": {
             "low": 0.0,
@@ -40,8 +41,10 @@ class Attribute:
             "high": 0.3,
             "min": 0.0,
             "max": 0.5,
-            "type": float,
+            "type": lambda x: round(float(x), 2),
         },
+        "len_train_set": {"type": int},
+        "len_test_set": {"type": int},
     }
 
     rng = np.random.default_rng(seed=1010)
@@ -56,7 +59,7 @@ class Attribute:
         ), f"Variation {variation} not found in options for {name}"
         self.variation = variation
 
-    def get(self):
+    def generate(self):
         options = Attribute.options[self.name]
         value = options[self.variation]
 
@@ -66,6 +69,10 @@ class Attribute:
             sample = np.clip(sample, options["min"], options["max"])
 
         return options["type"](sample)
+
+    @classmethod
+    def get(cls, name, value):
+        return cls.options[name]["type"](value)
 
     def __repr__(self):
         return f"Attribute({self.name},{self.variation})"

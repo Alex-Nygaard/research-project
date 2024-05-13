@@ -10,8 +10,6 @@ try:
 except FileNotFoundError:
     print("Dataset not found, downloading...")
     dataset = datasets.load_dataset(path=DATASET, keep_in_memory=True)
-    if not os.path.exists(DATA_SAVE_PATH):
-        os.makedirs(DATA_SAVE_PATH)
     dataset.save_to_disk(DATA_SAVE_PATH)
 
 train_set = dataset["train"]

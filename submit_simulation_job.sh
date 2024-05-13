@@ -7,8 +7,8 @@
 #SBATCH --time=00:30:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
-### #SBATCH --gpus-per-task=0
-#SBATCH --mem-per-cpu=3G
+### #SBATCH --gpus-per-task=1
+#SBATCH --mem-per-cpu=2G
 #SBATCH --account=education-eemcs-courses-cse3000
 
 module load 2023r1
@@ -18,13 +18,13 @@ module load miniconda3
 unset CONDA_SHLVL
 source "$(conda info --base)/etc/profile.d/conda.sh"
 
-if [ ! -f logs/run_counter.txt ]; then
-    echo "0" > logs/run_counter.txt
-fi
+#if [ ! -f logs/run_counter.txt ]; then
+#    echo "0" > logs/run_counter.txt
+#fi
 
-RUN_NUMBER=$(cat logs/run_counter.txt)
-mkdir -p "logs/run_${RUN_NUMBER}"
+#RUN_NUMBER=$(cat logs/run_counter.txt)
+mkdir -p "logs/run_$SLURM_JOB_ID"
 
 conda activate new_env
-srun python main.py simulation > "logs/run_${RUN_NUMBER}/output.log" 2>&1
+srun python main.py simulation --client_variation=mid --data_variation=mid > "logs/run_$SLURM_JOB_ID/output.log" 2>&1
 conda deactivate

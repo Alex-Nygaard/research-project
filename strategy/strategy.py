@@ -1,10 +1,8 @@
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-from flwr.common import Scalar, EvaluateRes
-from flwr.server.client_proxy import ClientProxy
-from flwr.server.strategy.aggregate import weighted_loss_avg
+from flwr.common import Scalar
 import flwr as fl
 from datasets.utils.logging import disable_progress_bar
 

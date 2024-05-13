@@ -4,10 +4,14 @@ import argparse
 from time import sleep
 import flwr as fl
 
-from utils.run_counter import increment_run_counter
+from config.run_config import RunConfig
+from config.constants import NUM_CLIENTS, LOG_DIR, RUN_ID
+from config.structure import create_output_structure
+from client.client import FlowerClient
+from utils.run_counter import increment_run_counter, read_run_counter
 from logger.logger import get_logger
-from config.constants import NUM_CLIENTS, LOG_DIR
 
+create_output_structure()
 
 logger = get_logger("main")
 fl.common.logger.configure(
@@ -15,30 +19,38 @@ fl.common.logger.configure(
 )
 
 
-async def main(option: str, client_variation: str, data_variation: str):
-    logger.info("Running main with option=%s", option)
-    if option == "simulation":
-        simulation_task = run_simulation()
+async def main(config: RunConfig):
+
+    # clients = FlowerClient.generate_clients(
+    #     NUM_CLIENTS, config.client_variation, config.data_variation
+    # )
+    # FlowerClient.write_many(clients, LOG_DIR, "clients.csv")
+
+    if config.option == "simulation":
+        logger.info("Starting simulation...")
+        simulation_task = run_simulation(config)
         logger.info("Simulation task started.")
         await asyncio.gather(simulation_task)
-    elif option == "deployment":
+    elif config.option == "deployment":
+        logger.info("Starting deployment...")
         server_task = run_server()
         logger.info("Server task started. Waiting 5 seconds to start clients...")
         sleep(5)
-        client_tasks = [run_client(i) for i in range(NUM_CLIENTS)]
+        client_tasks = [run_client(i, config) for i in range(NUM_CLIENTS)]
         logger.info("Client tasks (%s) started.", NUM_CLIENTS)
         await asyncio.gather(server_task, *client_tasks)
 
+    config.write_to_json(LOG_DIR, "run_config.json")
     increment_run_counter()
 
 
-async def run_client(partition_id):
+async def run_client(partition_id: int, config: RunConfig):
     cmd = [
         "python",
         "deploy_client.py",
-        f"--partition-id={partition_id}",
-        "--client_variation=mid",
-        "--data_variation=mid",
+        f"--partition_id={partition_id}",
+        f"--client_variation={config.client_variation}",
+        f"--data_variation={config.data_variation}",
     ]
     process = await asyncio.create_subprocess_exec(*cmd, cwd=os.getcwd())
     await process.wait()
@@ -51,12 +63,12 @@ async def run_server():
     await process.wait()
 
 
-async def run_simulation():
+async def run_simulation(config: RunConfig):
     cmd = [
         "python",
         "run_simulation.py",
-        "--client_variation=mid",
-        "--data_variation=mid",
+        f"--client_variation={config.client_variation}",
+        f"--data_variation={config.data_variation}",
     ]
     process = await asyncio.create_subprocess_exec(*cmd, cwd=os.getcwd())
     await process.wait()
@@ -70,18 +82,24 @@ if __name__ == "__main__":
         "option",
         type=str,
         choices=["simulation", "deployment"],
+        default="simulation",
+        nargs="?",
         help="Either 'simulation' or 'deployment'",
     )
     parser.add_argument(
         "--client_variation",
         type=str,
         choices=["low", "mid", "high"],
+        default="mid",
+        nargs="?",
         help="Client attribute variation.",
     )
     parser.add_argument(
         "--data_variation",
         type=str,
         choices=["low", "mid", "high"],
+        default="mid",
+        nargs="?",
         help="Data attribute variation.",
     )
 
@@ -90,4 +108,7 @@ if __name__ == "__main__":
     client_variation = args.client_variation
     data_variation = args.data_variation
 
-    asyncio.run(main(option, client_variation, data_variation))
+    run_config = RunConfig(RUN_ID, option, client_variation, data_variation)
+    logger.info("Run config: %s", run_config)
+
+    asyncio.run(main(run_config))

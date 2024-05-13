@@ -1,8 +1,8 @@
 import os
 import flwr as fl
 import argparse
-from strategy.strategy import get_strategy
 
+from strategy.strategy import get_strategy
 from client.client import get_client_fn
 from config.constants import NUM_ROUNDS, NUM_CLIENTS, LOG_DIR
 from logger.logger import get_logger
@@ -15,13 +15,13 @@ if __name__ == "__main__":
         "--data_variation",
         type=str,
         choices=["low", "mid", "high"],
-        help="Partition ID",
+        help="Data variation.",
     )
     parser.add_argument(
         "--client_variation",
         type=str,
         choices=["low", "mid", "high"],
-        help="Partition ID",
+        help="Client variation.",
     )
 
     args = parser.parse_args()
@@ -33,10 +33,15 @@ if __name__ == "__main__":
         identifier="FlowerLog", filename=os.path.join(LOG_DIR, "flwr.log")
     )
 
+    num_cpus = int(os.environ.get("SLURM_CPUS_PER_TASK", 8))
+    num_gpus = int(os.environ.get("SLURM_GPUS", 0))
+
     logger.info(
-        "Running simulation with client variation: %s and data variation: %s",
+        "RUNNING SIMULATION with client_var=%s,data_var=%s,num_cpus=%s,num_gpus=%s",
         client_variation,
         data_variation,
+        num_cpus,
+        num_gpus,
     )
 
     history = fl.simulation.start_simulation(
@@ -45,8 +50,8 @@ if __name__ == "__main__":
         client_fn=get_client_fn(client_variation, data_variation),
         strategy=get_strategy(),
         ray_init_args={
-            "num_cpus": os.environ.get("SLURM_CPUS_PER_TASK", 8),
-            "num_gpus": os.environ.get("SLURM_GPUS", 0),
+            "num_cpus": num_cpus,
+            "num_gpus": num_gpus,
         },
     )
 

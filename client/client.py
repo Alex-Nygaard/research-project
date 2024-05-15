@@ -58,11 +58,17 @@ class FlowerClient(NumPyClient):
             or Attribute("perc_missing_labels", data_variation).generate()
         )
 
-        self.full_dataset = get_data_for_client(cid)
-        split = self.full_dataset.train_test_split(test_size=0.15)
-        self.train_set, self.test_set = split["train"], split["test"]
-        self.len_train_set = len_train_set or len(self.train_set)
-        self.len_test_set = len_test_set or len(self.test_set)
+        try:
+            self.full_dataset = get_data_for_client(cid)
+            split = self.full_dataset.train_test_split(test_size=0.15)
+            self.train_set, self.test_set = split["train"], split["test"]
+            self.len_train_set = len_train_set or len(self.train_set)
+            self.len_test_set = len_test_set or len(self.test_set)
+        except Exception as e:
+            self.train_set = None
+            self.test_set = None
+            self.len_train_set = len_train_set if len_train_set is not None else 0
+            self.len_test_set = len_test_set if len_test_set is not None else 0
 
     def fit(self, parameters, config):
         self.net.set_parameters(parameters)
@@ -87,6 +93,7 @@ class FlowerClient(NumPyClient):
             "rec": rec,
             "prec": prec,
             "f1": f1,
+            "loss": loss,
         }
 
         return loss, len(test_loader), output_dict

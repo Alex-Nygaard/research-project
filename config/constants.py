@@ -2,10 +2,7 @@ import torch
 import os
 from utils.run_counter import read_run_counter
 
-SLURM_JOB_ID = os.environ.get("SLURM_JOB_ID", None)
-RUN_COUNT = read_run_counter()
-RUN_ID = SLURM_JOB_ID or RUN_COUNT
-
+RUN_ID = os.environ.get("SLURM_JOB_ID", None) or read_run_counter()
 LOG_DIR = os.path.join("logs", f"run_{RUN_ID}")
 
 torch_device = "cpu"
@@ -18,9 +15,9 @@ DEVICE = torch.device(torch_device)
 DATASET = "cifar10"
 DATA_SAVE_PATH = "data/storage"
 
-NUM_ROUNDS = 30
+NUM_ROUNDS = 5
 
-NUM_CLIENTS = 50
+NUM_CLIENTS = 4
 PERC_DROPOUT = 0.5
 BATCH_SIZE = 32
 LOCAL_EPOCHS = 5

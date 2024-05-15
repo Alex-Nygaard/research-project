@@ -41,6 +41,8 @@ class Metric:
     ):
         self.x, self.y = zip(*data)
         self.label = label
+        self.key = key
+        self.scenario = scenario
         self.style = self.styles[key][scenario]
 
 
@@ -99,6 +101,9 @@ class RunData:
         self.clients = clients
 
         self.metrics = self.history.get_centralized_metrics(self.run_config)
+
+    def get_metric(self, key: str) -> Metric:
+        return next((metric for metric in self.metrics if metric.key == key), None)
 
     @staticmethod
     def build(run_id: str, base_path: str = "from-delftblue/logs"):

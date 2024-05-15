@@ -7,7 +7,6 @@ plt.style.use(["science", "ieee"])
 
 
 def plot_metrics(
-    history: History,
     metrics: list[Metric],
     title: str = "Metrics per Round",
     x_label="Round number",
@@ -15,10 +14,6 @@ def plot_metrics(
     save_dir: str = None,
 ):
     plt.figure(figsize=(10, 6))
-
-    plot_single_metric(
-        Metric(history.losses_distributed, "Distributed Loss", "loss", "low")
-    )
 
     for metric in metrics:
         plot_single_metric(metric)

@@ -79,7 +79,7 @@ if __name__ == "__main__":
     sleep(0.5)
     parser = argparse.ArgumentParser(description="FL simulation and deployment runner.")
     parser.add_argument(
-        "option",
+        "--option",
         type=str,
         choices=["simulation", "deployment"],
         default="simulation",

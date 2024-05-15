@@ -28,8 +28,8 @@ async def main(config: RunConfig):
     elif config.option == "deployment":
         logger.info("Starting deployment...")
         server_task = run_server()
-        logger.info("Server task started. Waiting 5 seconds to start clients...")
-        sleep(5)
+        logger.info("Server task started. Waiting 10 seconds to start clients...")
+        sleep(10)
         client_tasks = [run_client(i, config) for i in range(NUM_CLIENTS)]
         logger.info("Client tasks (%s) started.", NUM_CLIENTS)
         await asyncio.gather(server_task, *client_tasks)

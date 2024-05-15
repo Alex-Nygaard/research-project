@@ -10,8 +10,12 @@ from config.constants import LOG_DIR
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Running a client.")
     parser.add_argument("--partition_id", type=int, help="Partition ID", required=True)
-    parser.add_argument("--client_variation", type=str, help="Client variation")
-    parser.add_argument("--data_variation", type=str, help="Client variation")
+    parser.add_argument(
+        "--client_variation", type=str, help="Client variation", default="mid"
+    )
+    parser.add_argument(
+        "--data_variation", type=str, help="Client variation", default="mid"
+    )
 
     args = parser.parse_args()
     partition_id = args.partition_id

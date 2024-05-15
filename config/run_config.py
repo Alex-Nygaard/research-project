@@ -10,10 +10,34 @@ class RunConfig:
         self.option = option
         self.client_variation = client_variation
         self.data_variation = data_variation
+        self.code = f"{option[:3]}_C-{client_variation}_D-{data_variation}"
+
+    def get_scenario(self):
+        scenario = ""
+        if self.option == "deployment":
+            scenario = "deployment"
+        elif self.client_variation == "low" or self.data_variation == "low":
+            scenario = "low"
+        elif self.client_variation == "high" or self.data_variation == "high":
+            scenario = "high"
+        else:
+            scenario = "mid"
+        return scenario
 
     def write_to_json(self, path: str, filename: str):
         with open(os.path.join(path, filename), "w") as json_file:
             json.dump(self.__dict__, json_file)
+
+    @staticmethod
+    def read_from_json(path: str, filename: str):
+        with open(os.path.join(path, filename), "r") as file:
+            data = json.load(file)
+        return RunConfig(
+            run_id=data.get("run_id", -1),
+            option=data.get("option", "INVALID_OPT"),
+            client_variation=data.get("client_variation", "INVALID_CLI_VAR"),
+            data_variation=data.get("data_variation", "INVALID_DAT_VAR"),
+        )
 
     def __repr__(self):
         return f"RunConfig(run_id={self.run_id}, option={self.option}, client_variation={self.client_variation}, data_variation={self.data_variation})"

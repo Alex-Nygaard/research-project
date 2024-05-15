@@ -34,7 +34,7 @@ if __name__ == "__main__":
     )
 
     num_cpus = int(os.environ.get("SLURM_CPUS_PER_TASK", 8))
-    num_gpus = int(os.environ.get("SLURM_GPUS", 0))
+    num_gpus = int(os.environ.get("SLURM_GPUS_PER_TASK", 0))
 
     logger.info(
         "RUNNING SIMULATION with client_var=%s,data_var=%s,num_cpus=%s,num_gpus=%s",

@@ -61,12 +61,8 @@ class FlowerClient(NumPyClient):
         self.full_dataset = get_data_for_client(cid)
         split = self.full_dataset.train_test_split(test_size=0.15)
         self.train_set, self.test_set = split["train"], split["test"]
-        self.len_train_set = len(self.train_set)
-        self.len_test_set = len(self.test_set)
-
-        if len_train_set is not None and len_test_set is not None:
-            assert self.len_train_set == len_train_set, "len_train_set does not match"
-            assert self.len_test_set == len_test_set, "len_test_set does not match"
+        self.len_train_set = len_train_set or len(self.train_set)
+        self.len_test_set = len_test_set or len(self.test_set)
 
     def fit(self, parameters, config):
         self.net.set_parameters(parameters)

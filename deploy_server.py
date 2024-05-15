@@ -16,7 +16,7 @@ if __name__ == "__main__":
     logger.info(f"NUM_ROUNDS: {NUM_ROUNDS}")
 
     history = fl.server.start_server(
-        server_address="0.0.0.0:18080",
+        server_address="127.0.0.1:5040",
         config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
         strategy=get_strategy(),
     )

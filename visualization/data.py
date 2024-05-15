@@ -67,6 +67,25 @@ class History:
                 metrics.append(Metric(data, label, key, run_config.get_scenario()))
         return metrics
 
+    # @staticmethod
+    # def average(history: List["History"]) -> "History":
+    #     losses_distributed = [sum(values) / len(values) for values in zip(*[h.losses_distributed for h in history])]
+    #     losses_centralized = [sum(values) / len(values) for values in zip(*[h.losses_centralized for h in history])]
+    #     metrics_distributed = {
+    #         key: [sum(values) / len(values) for values in zip(*[h.metrics_distributed[key] for h in history])]
+    #         for key in history[0].metrics_distributed.keys()
+    #     }
+    #     metrics_centralized = {
+    #         key: [sum(values) / len(values) for values in zip(*[h.metrics_centralized[key] for h in history])]
+    #         for key in history[0].metrics_centralized.keys()
+    #     }
+    #     return History(
+    #         losses_distributed=losses_distributed,
+    #         losses_centralized=losses_centralized,
+    #         metrics_distributed=metrics_distributed,
+    #         metrics_centralized=metrics_centralized,
+    #     )
+
     @staticmethod
     def read(filepath):
         with open(filepath, "r") as file:
@@ -120,3 +139,10 @@ class RunData:
             runs.append(cls.build(run_id, base_path))
 
         return runs
+
+    # @classmethod
+    # def average_metrics(cls, runs: List["RunData"]) -> "RunData":
+    #     history =
+    #     run_config = runs[0].run_config
+    #     clients = runs[0].clients
+    #     return RunData("average", history, run_config, clients)

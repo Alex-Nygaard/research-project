@@ -26,7 +26,7 @@ if __name__ == "__main__":
     logger.info(f"Starting client with partition_id={partition_id}")
 
     fl.client.start_client(
-        server_address="127.0.0.1:18080",
+        server_address="127.0.0.1:5040",
         client_fn=get_client_fn(
             client_variation, data_variation, deployment_id=partition_id
         ),

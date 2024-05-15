@@ -7,8 +7,7 @@ import flwr as fl
 from config.run_config import RunConfig
 from config.constants import NUM_CLIENTS, LOG_DIR, RUN_ID
 from config.structure import create_output_structure
-from client.client import FlowerClient
-from utils.run_counter import increment_run_counter, read_run_counter
+from utils.run_counter import increment_run_counter
 from logger.logger import get_logger
 
 create_output_structure()
@@ -20,11 +19,6 @@ fl.common.logger.configure(
 
 
 async def main(config: RunConfig):
-
-    # clients = FlowerClient.generate_clients(
-    #     NUM_CLIENTS, config.client_variation, config.data_variation
-    # )
-    # FlowerClient.write_many(clients, LOG_DIR, "clients.csv")
 
     if config.option == "simulation":
         logger.info("Starting simulation...")

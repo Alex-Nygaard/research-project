@@ -4,7 +4,7 @@
 ### #SBATCH --output=out.sim.%j.out
 ### #SBATCH --error=err.sim.%j.err
 #SBATCH --partition=compute
-#SBATCH --time=00:30:00
+#SBATCH --time=00:05:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gpus-per-task=0
@@ -33,6 +33,8 @@ for arg in "$@"; do
     esac
 done
 
+echo "Running main.py with option=$option, client_variation=$client_variation, data_variation=$data_variation"
+
 conda activate new_env
-srun python main.py --option="$option" --client_variation="$client_variation" --data_variation="$data_variation" > "logs/run_$SLURM_JOB_ID/output.log" 2>&1
+srun python main.py --option="$option" --client_variation="$client_variation" --data_variation="$data_variation" > "logs/run_$SLURM_JOB_ID/output.log" 2>&1  || echo "Exit with error code $? (suppressed)"
 conda deactivate

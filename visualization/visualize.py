@@ -10,10 +10,11 @@ def create():
 
     runs = [deployment] + simulations
 
-    plot_metrics(
-        [run.get_metric("accuracy") for run in runs],
-        title="Accuracy per Round",
-        x_label="Round number",
-        y_label="Value",
-        save_dir="accuracy.png",
-    )
+    for key in ["accuracy", "loss"]:
+        plot_metrics(
+            [run.get_metric(key) for run in runs],
+            title=f"{key.capitalize()} per Round",
+            x_label="Round number",
+            y_label="Value",
+            save_dir=f"from-delftblue/logs/{key}.png",
+        )

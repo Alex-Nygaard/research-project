@@ -28,5 +28,5 @@ centralized_test_set = centralized_test_set.shuffle(seed=1010).with_transform(
 )
 
 
-def get_data_for_client(cid: int):
-    return train_set.shard(num_shards=NUM_CLIENTS, index=cid)
+def get_data_for_client(cid: int, num_clients: int):
+    return train_set.shard(num_shards=num_clients, index=cid)

@@ -57,9 +57,10 @@ class FlowerClient(NumPyClient):
             perc_missing_labels
             or Attribute("perc_missing_labels", data_variation).generate()
         )
+        self.num_clients = Attribute("num_clients", client_variation).generate()
 
         try:
-            self.full_dataset = get_data_for_client(cid)
+            self.full_dataset = get_data_for_client(cid, self.num_clients)
             split = self.full_dataset.train_test_split(test_size=0.15)
             self.train_set, self.test_set = split["train"], split["test"]
             self.len_train_set = len_train_set or len(self.train_set)

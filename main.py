@@ -4,6 +4,7 @@ import argparse
 from time import sleep
 import flwr as fl
 
+from client.attribute import Attribute
 from config.run_config import RunConfig
 from config.constants import NUM_CLIENTS, LOG_DIR, RUN_ID
 from config.structure import create_output_structure
@@ -31,10 +32,10 @@ async def main(config: RunConfig):
         logger.info("Server task started. Waiting 10 seconds to start clients...")
         sleep(10)
         client_tasks = []
-        for i in range(NUM_CLIENTS):
+        for i in range(Attribute("num_clients", config.client_variation).generate()):
             client_tasks.append(run_client(i, config))
             sleep(0.5)
-        logger.info("Client tasks (%s) started.", NUM_CLIENTS)
+        logger.info("Client tasks (%s) started.", len(client_tasks))
         await asyncio.gather(server_task, *client_tasks)
 
     config.write_to_json(LOG_DIR, "run_config.json")

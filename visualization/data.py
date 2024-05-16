@@ -1,5 +1,6 @@
 import json
 import os
+import numpy as np
 from typing import List, Tuple, Dict
 import scienceplots
 import matplotlib.pyplot as plt
@@ -45,17 +46,38 @@ class Metric:
         self.scenario = scenario
         self.style = self.styles[key][scenario]
 
+    @classmethod
+    def average_many(cls, metrics: List["Metric"]) -> "Metric":
+        num_metrics = len(metrics)
+        assert num_metrics > 0, "No metrics to average"
+
+        key = metrics[0].key
+        scenario = metrics[0].scenario
+
+        assert [metric.key for metric in metrics].count(
+            key
+        ) == num_metrics, "Metrics must have the same key"
+        assert [metric.scenario for metric in metrics].count(
+            scenario
+        ) == num_metrics, "Metrics must have the same scenario"
+
+        data = []
+        for i in range(len(metrics[0].x)):
+            round_values = [metric.y[i] for metric in metrics]
+            data.append((i, sum(round_values) / num_metrics))
+        return cls(data, f"Average {key} of {num_metrics} runs", key, scenario)
+
 
 class History:
     def __init__(
         self,
-        losses_distributed: List[Tuple[int, float]],
-        losses_centralized: List[Tuple[int, float]],
+        # losses_distributed: List[Tuple[int, float]],
+        # losses_centralized: List[Tuple[int, float]],
         metrics_distributed: Dict[str, List[Tuple[int, float]]],
         metrics_centralized: Dict[str, List[Tuple[int, float]]],
     ):
-        self.losses_distributed = losses_distributed
-        self.losses_centralized = losses_centralized
+        # self.losses_distributed = losses_distributed
+        # self.losses_centralized = losses_centralized
         self.metrics_distributed = metrics_distributed
         self.metrics_centralized = metrics_centralized
 
@@ -67,32 +89,50 @@ class History:
                 metrics.append(Metric(data, label, key, run_config.get_scenario()))
         return metrics
 
-    # @staticmethod
-    # def average(history: List["History"]) -> "History":
-    #     losses_distributed = [sum(values) / len(values) for values in zip(*[h.losses_distributed for h in history])]
-    #     losses_centralized = [sum(values) / len(values) for values in zip(*[h.losses_centralized for h in history])]
-    #     metrics_distributed = {
-    #         key: [sum(values) / len(values) for values in zip(*[h.metrics_distributed[key] for h in history])]
-    #         for key in history[0].metrics_distributed.keys()
-    #     }
-    #     metrics_centralized = {
-    #         key: [sum(values) / len(values) for values in zip(*[h.metrics_centralized[key] for h in history])]
-    #         for key in history[0].metrics_centralized.keys()
-    #     }
-    #     return History(
-    #         losses_distributed=losses_distributed,
-    #         losses_centralized=losses_centralized,
-    #         metrics_distributed=metrics_distributed,
-    #         metrics_centralized=metrics_centralized,
-    #     )
+    @staticmethod
+    def average_many(histories: List["History"]) -> "History":
+        num = len(histories)
+        assert num > 0, "Length of 'histories' must be greater than 0"
+
+        metrics_distributed = {}
+        metrics_centralized = {}
+
+        for key in histories[0].metrics_distributed.keys():
+            round_nums = [
+                round_num for round_num, _ in histories[0].metrics_distributed[key]
+            ]
+            values = np.zeros(len(round_nums))
+            for history in histories:
+                values += np.array(
+                    [value for _, value in history.metrics_distributed[key]]
+                )
+            values /= num
+            metrics_distributed[key] = zip(round_nums, values)
+
+        for key in histories[0].metrics_centralized.keys():
+            round_nums = [
+                round_num for round_num, _ in histories[0].metrics_centralized[key]
+            ]
+            values = np.zeros(len(round_nums))
+            for history in histories:
+                values += np.array(
+                    [value for _, value in history.metrics_centralized[key]]
+                )
+            values /= num
+            metrics_centralized[key] = zip(round_nums, values)
+
+        return History(
+            metrics_distributed=metrics_distributed,
+            metrics_centralized=metrics_centralized,
+        )
 
     @staticmethod
     def read(filepath):
         with open(filepath, "r") as file:
             data = json.load(file)
         return History(
-            losses_distributed=data.get("losses_distributed", []),
-            losses_centralized=data.get("losses_centralized", []),
+            # losses_distributed=data.get("losses_distributed", []),
+            # losses_centralized=data.get("losses_centralized", []),
             metrics_distributed=data.get("metrics_distributed", {}),
             metrics_centralized=data.get("metrics_centralized", {}),
         )
@@ -140,9 +180,10 @@ class RunData:
 
         return runs
 
-    # @classmethod
-    # def average_metrics(cls, runs: List["RunData"]) -> "RunData":
-    #     history =
-    #     run_config = runs[0].run_config
-    #     clients = runs[0].clients
-    #     return RunData("average", history, run_config, clients)
+    @classmethod
+    def average_many(cls, runs: List["RunData"]) -> "RunData":
+        assert len(runs) > 0, "Must have more than 0 runs"
+        history = History.average_many([run.history for run in runs])
+        run_config = RunConfig.combine([run.run_config for run in runs])
+        clients = runs[0].clients
+        return RunData("average", history, run_config, clients)

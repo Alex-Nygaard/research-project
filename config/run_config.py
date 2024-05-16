@@ -1,5 +1,6 @@
 import json
 import os
+from typing import List
 
 
 class RunConfig:
@@ -38,6 +39,17 @@ class RunConfig:
             client_variation=data.get("client_variation", "INVALID_CLI_VAR"),
             data_variation=data.get("data_variation", "INVALID_DAT_VAR"),
         )
+
+    @staticmethod
+    def combine(runs: List["RunConfig"]) -> "RunConfig":
+        num = len(runs)
+        assert num > 0, "[RunConfig] Need atleast 1 run configs to combine"
+
+        assert [run.code for run in runs].count(
+            runs[0].code
+        ) == num, "[RunConfig] All 'code's must be the same"
+
+        return runs[0]
 
     def __repr__(self):
         return f"RunConfig(run_id={self.run_id}, option={self.option}, client_variation={self.client_variation}, data_variation={self.data_variation})"

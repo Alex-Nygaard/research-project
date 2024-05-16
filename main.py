@@ -30,7 +30,10 @@ async def main(config: RunConfig):
         server_task = run_server()
         logger.info("Server task started. Waiting 10 seconds to start clients...")
         sleep(10)
-        client_tasks = [run_client(i, config) for i in range(NUM_CLIENTS)]
+        client_tasks = []
+        for i in range(NUM_CLIENTS):
+            client_tasks.append(run_client(i, config))
+            sleep(0.5)
         logger.info("Client tasks (%s) started.", NUM_CLIENTS)
         await asyncio.gather(server_task, *client_tasks)
 
@@ -39,6 +42,7 @@ async def main(config: RunConfig):
 
 
 async def run_client(partition_id: int, config: RunConfig):
+    logger.info("Starting client %s.", partition_id)
     cmd = [
         "python",
         "deploy_client.py",
@@ -76,7 +80,7 @@ if __name__ == "__main__":
         "--option",
         type=str,
         choices=["simulation", "deployment"],
-        default="simulation",
+        default="deployment",
         nargs="?",
         help="Either 'simulation' or 'deployment'",
     )

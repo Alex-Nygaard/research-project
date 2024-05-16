@@ -3,11 +3,11 @@
 #SBATCH --job-name="sim"
 ### #SBATCH --output=out.sim.%j.out
 ### #SBATCH --error=err.sim.%j.err
-#SBATCH --partition=compute
-#SBATCH --time=00:05:00
+#SBATCH --partition=gpu-a100
+#SBATCH --time=02:00:00
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=8
-#SBATCH --gpus-per-task=0
+#SBATCH --cpus-per-task=16
+#SBATCH --gpus-per-task=1
 #SBATCH --mem-per-cpu=2G
 #SBATCH --account=education-eemcs-courses-cse3000
 

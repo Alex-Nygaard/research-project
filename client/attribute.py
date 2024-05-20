@@ -9,10 +9,10 @@ class Attribute:
 
     options = {
         "cid": {"type": int},
-        "num_clients": {
-            "low": 50,
-            "mid": 100,
-            "high": 150,
+        "num_clients": {  # TODO reduce
+            "low": 4,
+            "mid": 6,
+            "high": 8,
             "sample": False,
             "type": int,
         },

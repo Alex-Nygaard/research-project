@@ -6,7 +6,7 @@ import flwr as fl
 
 from client.attribute import Attribute
 from config.run_config import RunConfig
-from config.constants import NUM_CLIENTS, LOG_DIR, RUN_ID
+from config.constants import LOG_DIR, RUN_ID
 from config.structure import create_output_structure
 from utils.run_counter import increment_run_counter
 from logger.logger import get_logger
@@ -38,6 +38,7 @@ async def main(config: RunConfig):
         logger.info("Client tasks (%s) started.", len(client_tasks))
         await asyncio.gather(server_task, *client_tasks)
 
+    logger.info("Main finished. Writing to disk...")
     config.write_to_json(LOG_DIR, "run_config.json")
     increment_run_counter()
 

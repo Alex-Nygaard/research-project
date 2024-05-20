@@ -2,8 +2,11 @@ import scienceplots
 import matplotlib.pyplot as plt
 
 from visualization.data import History, Metric
+from logger.logger import get_logger
 
 plt.style.use(["science", "ieee"])
+
+logger = get_logger("visualization.plotting")
 
 
 def plot_metrics(
@@ -24,6 +27,7 @@ def plot_metrics(
     plt.legend()
     plt.grid(True)
     if save_dir:
+        logger.info(f"Saving figure to {save_dir}.")
         plt.savefig(save_dir)
     else:
         plt.show()

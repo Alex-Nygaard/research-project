@@ -1,10 +1,12 @@
 import os
 import csv
+
+from datasets import Dataset
 from torch.utils.data import DataLoader
 from flwr.client import NumPyClient
 from datasets.utils.logging import disable_progress_bar
 
-from config.constants import DEVICE, LOG_DIR
+from config.constants import DEVICE, LOG_DIR, NUM_ROUNDS
 from client.network import Net, train, test, eval_learning
 from data.load_data import get_data_for_client
 from client.attribute import Attribute
@@ -60,14 +62,17 @@ class FlowerClient(NumPyClient):
         self.num_clients = Attribute("num_clients", client_variation).generate()
 
         try:
-            self.full_dataset = get_data_for_client(cid, self.num_clients)
+            self.full_dataset = get_data_for_client(
+                cid,
+                self.num_data_points,
+            )
             split = self.full_dataset.train_test_split(test_size=0.15)
             self.train_set, self.test_set = split["train"], split["test"]
             self.len_train_set = len_train_set or len(self.train_set)
             self.len_test_set = len_test_set or len(self.test_set)
         except Exception as e:
-            self.train_set = None
-            self.test_set = None
+            self.train_set: Dataset = None
+            self.test_set: Dataset = None
             self.len_train_set = len_train_set if len_train_set is not None else 0
             self.len_test_set = len_test_set if len_test_set is not None else 0
 
@@ -75,6 +80,10 @@ class FlowerClient(NumPyClient):
         self.net.set_parameters(parameters)
         self.net.train()
         current_round = config["current_round"]
+        num_rounds = NUM_ROUNDS
+
+        subset = self.train_set.select
+
         train_loader = DataLoader(
             self.train_set, batch_size=self.batch_size, shuffle=True
         )

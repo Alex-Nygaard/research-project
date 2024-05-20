@@ -1,6 +1,9 @@
 import json
 import os
 from typing import List
+from logger.logger import get_logger
+
+log = get_logger("config.run_config")
 
 
 class RunConfig:
@@ -26,7 +29,9 @@ class RunConfig:
         return scenario
 
     def write_to_json(self, path: str, filename: str):
-        with open(os.path.join(path, filename), "w") as json_file:
+        full_path = os.path.join(path, filename)
+        log.info(f"Writing RunConfig to {full_path}.")
+        with open(full_path, "w") as json_file:
             json.dump(self.__dict__, json_file)
 
     @staticmethod

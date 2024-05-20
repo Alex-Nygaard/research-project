@@ -8,21 +8,41 @@ log = get_logger("config.run_config")
 
 class RunConfig:
     def __init__(
-        self, run_id: int, option: str, client_variation: str, data_variation: str
+        self,
+        run_id: int,
+        option: str,
+        resources: str,
+        concentration: str,
+        variability: str,
+        quality: str,
     ):
         self.run_id = run_id
         self.option = option
-        self.client_variation = client_variation
-        self.data_variation = data_variation
-        self.code = f"{option[:3]}_C-{client_variation}_D-{data_variation}"
+        self.resources = resources
+        self.concentration = concentration
+        self.variability = variability
+        self.quality = quality
+        self.code = (
+            f"{option[:3]}_R-{resources}_C-{concentration}_V-{variability}_Q-{quality}"
+        )
 
     def get_scenario(self):
         scenario = ""
         if self.option == "deployment":
             scenario = "deployment"
-        elif self.client_variation == "low" or self.data_variation == "low":
+        elif "low" in [
+            self.resources,
+            self.concentration,
+            self.variability,
+            self.quality,
+        ]:
             scenario = "low"
-        elif self.client_variation == "high" or self.data_variation == "high":
+        elif "high" in [
+            self.resources,
+            self.concentration,
+            self.variability,
+            self.quality,
+        ]:
             scenario = "high"
         else:
             scenario = "mid"
@@ -41,8 +61,10 @@ class RunConfig:
         return RunConfig(
             run_id=data.get("run_id", -1),
             option=data.get("option", "INVALID_OPT"),
-            client_variation=data.get("client_variation", "INVALID_CLI_VAR"),
-            data_variation=data.get("data_variation", "INVALID_DAT_VAR"),
+            resources=data.get("resources", "INVALID_RES"),
+            concentration=data.get("concentration", "INVALID_CONC"),
+            variability=data.get("variability", "INVALID_VAR"),
+            quality=data.get("quality", "INVALID_QUAL"),
         )
 
     @staticmethod
@@ -57,4 +79,4 @@ class RunConfig:
         return runs[0]
 
     def __repr__(self):
-        return f"RunConfig(run_id={self.run_id}, option={self.option}, client_variation={self.client_variation}, data_variation={self.data_variation})"
+        return f"RunConfig(run_id={self.run_id}, code={self.code})"

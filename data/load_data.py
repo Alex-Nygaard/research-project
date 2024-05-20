@@ -1,7 +1,8 @@
 import os
+from typing import Tuple
 
 import datasets
-from datasets import Dataset
+from datasets import Dataset, DatasetDict
 
 from config.constants import DATA_SAVE_PATH, DATASET
 from torchvision.transforms import ToTensor, Normalize, Compose
@@ -33,5 +34,9 @@ centralized_test_set = centralized_test_set.shuffle(seed=1010).with_transform(
 def get_data_for_client(
     cid: int,
     num_data_points: int,
-) -> Dataset:
-    return train_set[cid * num_data_points : (cid + 1) * num_data_points]
+) -> DatasetDict:
+    client_data = train_set.select(
+        range(cid * num_data_points, (cid + 1) * num_data_points)
+    )
+    split = client_data.train_test_split(test_size=0.15, seed=1010)
+    return split

@@ -1,3 +1,4 @@
+import math
 import os
 import csv
 
@@ -30,8 +31,10 @@ class FlowerClient(NumPyClient):
     def __init__(
         self,
         cid: int,
-        client_variation: str = "mid",
-        data_variation: str = "mid",
+        resources: str = "mid",
+        concentration: str = "mid",
+        variability: str = "mid",
+        quality: str = "mid",
         batch_size: int = None,
         local_epochs: int = None,
         num_data_points: int = None,
@@ -43,36 +46,32 @@ class FlowerClient(NumPyClient):
         self.cid = cid
         self.net = Net().to(DEVICE)
 
-        self.batch_size = (
-            batch_size or Attribute("batch_size", client_variation).generate()
-        )
+        self.batch_size = batch_size or Attribute("batch_size", resources).generate()
         self.local_epochs = (
-            local_epochs or Attribute("local_epochs", client_variation).generate()
+            local_epochs or Attribute("local_epochs", resources).generate()
         )
         self.num_data_points = (
-            num_data_points or Attribute("num_data_points", data_variation).generate()
+            num_data_points or Attribute("num_data_points", concentration).generate()
         )
+        self.num_clients = Attribute("num_clients", concentration).generate()
         self.perc_new_data = (
-            perc_new_data or Attribute("perc_new_data", data_variation).generate()
+            perc_new_data or Attribute("perc_new_data", variability).generate()
         )
         self.perc_missing_labels = (
-            perc_missing_labels
-            or Attribute("perc_missing_labels", data_variation).generate()
+            perc_missing_labels or Attribute("perc_missing_labels", quality).generate()
         )
-        self.num_clients = Attribute("num_clients", client_variation).generate()
 
         try:
-            self.full_dataset = get_data_for_client(
+            self.dataset_dict = get_data_for_client(
                 cid,
                 self.num_data_points,
             )
-            split = self.full_dataset.train_test_split(test_size=0.15)
-            self.train_set, self.test_set = split["train"], split["test"]
-            self.len_train_set = len_train_set or len(self.train_set)
-            self.len_test_set = len_test_set or len(self.test_set)
+            # self.len_train_set = len(self.train_set)
+            # self.len_test_set = len(self.test_set)
         except Exception as e:
-            self.train_set: Dataset = None
-            self.test_set: Dataset = None
+            print(f"XXXXXX Error: {e}")
+            # self.train_set: Dataset = None
+            # self.test_set: Dataset = None
             self.len_train_set = len_train_set if len_train_set is not None else 0
             self.len_test_set = len_test_set if len_test_set is not None else 0
 
@@ -80,13 +79,18 @@ class FlowerClient(NumPyClient):
         self.net.set_parameters(parameters)
         self.net.train()
         current_round = config["current_round"]
-        num_rounds = NUM_ROUNDS
 
-        subset = self.train_set.select
-
-        train_loader = DataLoader(
-            self.train_set, batch_size=self.batch_size, shuffle=True
+        idx = math.floor(
+            (self.num_data_points * 0.85) / (1 + (current_round - 1) * self.perc_new_data)
         )
+
+        print(
+            f"idx={idx},current_round={current_round},num_data_points={self.num_data_points},perc_new_data={self.perc_new_data}"
+        )
+
+        data = self.dataset_dict["train"].select(range(idx))
+
+        train_loader = DataLoader(data, batch_size=self.batch_size, shuffle=True)
         train(self.net, train_loader, epochs=self.local_epochs)
         return self.net.get_parameters(config={}), len(train_loader), {}
 
@@ -119,14 +123,6 @@ class FlowerClient(NumPyClient):
 
     def __setitem__(self, key, value):
         setattr(self, key, value)
-
-    @staticmethod
-    def generate_clients(num_clients, client_variation, data_variation):
-        clients = []
-        for i in range(num_clients):
-            client = FlowerClient(i, client_variation, data_variation)
-            clients.append(client)
-        return clients
 
     @staticmethod
     def of(
@@ -188,8 +184,10 @@ def fit_config(server_round: int):
 
 
 def get_client_fn(
-    client_variation: str = "mid",
-    data_variation: str = "mid",
+    resources: str = "mid",
+    concentration: str = "mid",
+    variability: str = "mid",
+    quality: str = "mid",
     deployment_id: int = None,
 ):
     def client_fn(simulation_id: str):
@@ -200,7 +198,13 @@ def get_client_fn(
             if client.cid == cid:
                 return client.to_client()
 
-        client = FlowerClient(cid, client_variation, data_variation)
+        client = FlowerClient(
+            cid,
+            resources=resources,
+            concentration=concentration,
+            variability=variability,
+            quality=quality,
+        )
         client.write_to_csv(LOG_DIR, "clients.csv")
         return client.to_client()
 

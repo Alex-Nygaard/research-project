@@ -1,6 +1,5 @@
 import os
 import flwr as fl
-import argparse
 
 from client.attribute import Attribute
 from strategy.strategy import get_strategy
@@ -8,26 +7,16 @@ from client.client import get_client_fn
 from config.constants import NUM_ROUNDS, LOG_DIR
 from logger.logger import get_logger
 from data.save_results import save_history
-
+from utils.args import get_base_parser
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Running a simulation.")
-    parser.add_argument(
-        "--data_variation",
-        type=str,
-        choices=["low", "mid", "high"],
-        help="Data variation.",
-    )
-    parser.add_argument(
-        "--client_variation",
-        type=str,
-        choices=["low", "mid", "high"],
-        help="Client variation.",
-    )
+    parser = get_base_parser("Running a simulation.")
 
     args = parser.parse_args()
-    data_variation = args.data_variation
-    client_variation = args.client_variation
+    resources = args.resources
+    concentration = args.concentration
+    variability = args.variability
+    quality = args.quality
 
     logger = get_logger("simulation.run")
     fl.common.logger.configure(
@@ -38,17 +27,19 @@ if __name__ == "__main__":
     num_gpus = int(os.environ.get("SLURM_GPUS_PER_TASK", 0))
 
     logger.info(
-        "RUNNING SIMULATION with client_var=%s,data_var=%s,num_cpus=%s,num_gpus=%s",
-        client_variation,
-        data_variation,
+        "RUNNING SIMULATION with resources=%s,concentration=%s,variability=%s,quality=%s,num_cpus=%s,num_gpus=%s",
+        resources,
+        concentration,
+        variability,
+        quality,
         num_cpus,
         num_gpus,
     )
 
     history = fl.simulation.start_simulation(
-        num_clients=Attribute("num_clients", client_variation).generate(),
+        num_clients=Attribute("num_clients", concentration).generate(),
         config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
-        client_fn=get_client_fn(client_variation, data_variation),
+        client_fn=get_client_fn(resources, concentration, variability, quality),
         strategy=get_strategy(),
         ray_init_args={
             "num_cpus": num_cpus,

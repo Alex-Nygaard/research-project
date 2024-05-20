@@ -8,6 +8,7 @@ from client.attribute import Attribute
 from config.run_config import RunConfig
 from config.constants import LOG_DIR, RUN_ID
 from config.structure import create_output_structure
+from utils.args import get_base_parser
 from utils.run_counter import increment_run_counter
 from logger.logger import get_logger
 
@@ -32,7 +33,7 @@ async def main(config: RunConfig):
         logger.info("Server task started. Waiting 10 seconds to start clients...")
         sleep(10)
         client_tasks = []
-        for i in range(Attribute("num_clients", config.client_variation).generate()):
+        for i in range(Attribute("num_clients", config.concentration).generate()):
             client_tasks.append(run_client(i, config))
             sleep(0.5)
         logger.info("Client tasks (%s) started.", len(client_tasks))
@@ -43,14 +44,16 @@ async def main(config: RunConfig):
     increment_run_counter()
 
 
-async def run_client(partition_id: int, config: RunConfig):
-    logger.info("Starting client %s.", partition_id)
+async def run_client(cid: int, config: RunConfig):
+    logger.info("Starting client %s.", cid)
     cmd = [
         "python",
         "deploy_client.py",
-        f"--partition_id={partition_id}",
-        f"--client_variation={config.client_variation}",
-        f"--data_variation={config.data_variation}",
+        f"--cid={cid}",
+        f"--resources={config.resources}",
+        f"--concentration={config.concentration}",
+        f"--variability={config.variability}",
+        f"--quality={config.quality}",
     ]
     process = await asyncio.create_subprocess_exec(*cmd, cwd=os.getcwd())
     await process.wait()
@@ -67,8 +70,10 @@ async def run_simulation(config: RunConfig):
     cmd = [
         "python",
         "run_simulation.py",
-        f"--client_variation={config.client_variation}",
-        f"--data_variation={config.data_variation}",
+        f"--resources={config.resources}",
+        f"--concentration={config.concentration}",
+        f"--variability={config.variability}",
+        f"--quality={config.quality}",
     ]
     process = await asyncio.create_subprocess_exec(*cmd, cwd=os.getcwd())
     await process.wait()
@@ -77,7 +82,7 @@ async def run_simulation(config: RunConfig):
 if __name__ == "__main__":
     logger.info("Starting main.")
     sleep(0.5)
-    parser = argparse.ArgumentParser(description="FL simulation and deployment runner.")
+    parser = get_base_parser("FL simulation and deployment runner.")
     parser.add_argument(
         "--option",
         type=str,
@@ -86,29 +91,17 @@ if __name__ == "__main__":
         nargs="?",
         help="Either 'simulation' or 'deployment'",
     )
-    parser.add_argument(
-        "--client_variation",
-        type=str,
-        choices=["low", "mid", "high"],
-        default="mid",
-        nargs="?",
-        help="Client attribute variation.",
-    )
-    parser.add_argument(
-        "--data_variation",
-        type=str,
-        choices=["low", "mid", "high"],
-        default="mid",
-        nargs="?",
-        help="Data attribute variation.",
-    )
 
     args = parser.parse_args()
     option = args.option
-    client_variation = args.client_variation
-    data_variation = args.data_variation
+    resources = args.resources
+    concentration = args.concentration
+    variability = args.variability
+    quality = args.quality
 
-    run_config = RunConfig(RUN_ID, option, client_variation, data_variation)
+    run_config = RunConfig(
+        RUN_ID, option, resources, concentration, variability, quality
+    )
     logger.info("Run config: %s", run_config)
 
     asyncio.run(main(run_config))

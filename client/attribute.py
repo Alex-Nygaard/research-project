@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 
 np.random.seed(1010)
@@ -6,41 +8,43 @@ np.random.seed(1010)
 class Attribute:
 
     stddev_perc_of_mean = 0.15
+    total_data = 50_000
+    train_frac = 0.85
 
     options = {
         "cid": {"type": int},
-        "num_clients": {  # TODO reduce
-            "low": 4,
-            "mid": 6,
-            "high": 8,
-            "sample": False,
-            "type": int,
-        },
         "batch_size": {"low": 16, "mid": 32, "high": 64, "sample": False, "type": int},
         "local_epochs": {
-            "low": 2,
+            "low": 3,
             "mid": 5,
-            "high": 8,
+            "high": 7,
             "min": 1,
             "max": 10,
             "sample": True,
             "type": int,
         },
+        "num_clients": {  # TODO reduce
+            "low": 4,
+            "mid": 8,
+            "high": 16,
+            "sample": False,
+            "type": int,
+        },
         "num_data_points": {
-            "low": 50,
-            "mid": 100,
-            "high": 150,
+            "low": (total_data // 4),
+            "mid": (total_data // 8),
+            "high": (total_data // 16),
             "min": 10,
             "max": 200,
-            "sample": True,
+            "sample": False,
             "type": int,
         },
         "perc_new_data": {
-            "low": 0.0,
+            "low": 0.05,
             "mid": 0.1,
-            "high": 0.2,
+            "high": 0.15,
             "min": 0.0,
-            "max": 0.3,
+            "max": 0.2,
             "sample": True,
             "type": lambda x: round(float(x), 2),
         },

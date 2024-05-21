@@ -7,7 +7,7 @@ from config.constants import LOG_DIR
 from utils.args import get_base_parser
 
 if __name__ == "__main__":
-    parser = get_base_parser("FL simulation and deployment runner.")
+    parser = get_base_parser("Deploy an FL client.")
     parser.add_argument("--cid", type=int, help="Partition ID", required=True)
 
     args = parser.parse_args()

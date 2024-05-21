@@ -24,10 +24,10 @@ class Style:
 class Metric:
     styles = {
         "accuracy": {
-            "low": Style(color="#FFFAE6", marker="o"),
-            "mid": Style(color="#FF9F66", marker="s"),
-            "high": Style(color="#FF5F00", marker="x"),
-            "deployment": Style(color="#002379", marker="^"),
+            "low": Style(color="#00D2FC", marker="o"),
+            "mid": Style(color="#009EFA", marker="s"),
+            "high": Style(color="#845EC2", marker="x"),
+            "deployment": Style(color="#D63423", marker="^"),
         },
         "loss": {
             "low": Style(color="#D9EDBF", marker="o"),
@@ -81,12 +81,12 @@ class History:
         self.metrics_distributed = metrics_distributed
         self.metrics_centralized = metrics_centralized
 
-    def get_centralized_metrics(self, run_config: RunConfig) -> List[Metric]:
-        metrics = []
+    def get_centralized_metrics(self, run_config: RunConfig) -> Dict[str, Metric]:
+        metrics = {}
         for key, data in self.metrics_centralized.items():
             label = f"{key} - {run_config.code}"
             if key in Metric.styles:
-                metrics.append(Metric(data, label, key, run_config.get_scenario()))
+                metrics[key] = Metric(data, label, key, run_config.get_scenario())
         return metrics
 
     @staticmethod
@@ -161,8 +161,46 @@ class RunData:
 
         self.metrics = self.history.get_centralized_metrics(self.run_config)
 
-    def get_metric(self, key: str) -> Metric:
-        return next((metric for metric in self.metrics if metric.key == key), None)
+    def get_metric(self, target_key: str) -> Metric:
+        return next(
+            (self.metrics[key] for key in self.metrics.keys() if key == target_key),
+            None,
+        )
+
+    @staticmethod
+    def many_to_csv(runs: List["RunData"], path: str, filename: str):
+        with open(os.path.join(path, filename), "w") as file:
+            file.write(
+                "code,max_acc,max_acc_round,max_loss,max_loss_round,loss_conv(80%),loss_conv(90%)\n"
+            )
+            for run in runs:
+                accuracies = run.metrics.get("accuracy")
+                max_acc, max_acc_round = -1, -1
+                if accuracies:
+                    max_acc_idx = np.argmax(accuracies.y)
+                    max_acc = accuracies.y[max_acc_idx]
+                    max_acc_round = accuracies.x[max_acc_idx]
+
+                losses = run.get_metric("loss")
+                max_loss, max_loss_round = -1, -1
+                loss_conv_80, loss_conv_90 = -1, -1
+                if losses:
+                    max_loss_idx = np.argmax(losses.y)
+                    max_loss = losses.y[max_loss_idx]
+                    max_loss_round = losses.x[max_loss_idx]
+
+                    for i, loss in enumerate(losses.y):
+                        if loss > 0.8 * max_loss and loss_conv_80 == -1:
+                            loss_conv_80 = i
+                        if loss > 0.9 * max_loss and loss_conv_90 == -1:
+                            loss_conv_90 = i
+                        if loss_conv_80 != -1 and loss_conv_90 != -1:
+                            break
+
+                file.write(
+                    f"{run.run_config.code},{max_acc},{max_acc_round},{max_loss},{max_loss_round},{loss_conv_80},{loss_conv_90}\n"
+                )
+            file.flush()
 
     @staticmethod
     def build(run_id: str, base_path: str = "from-delftblue/logs"):

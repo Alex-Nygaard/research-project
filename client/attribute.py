@@ -24,16 +24,16 @@ class Attribute:
             "type": int,
         },
         "num_clients": {  # TODO reduce
-            "low": 4,
-            "mid": 8,
-            "high": 16,
+            "low": 16,
+            "mid": 25,
+            "high": 40,
             "sample": False,
             "type": int,
         },
-        "num_data_points": {
-            "low": (total_data // 4),
-            "mid": (total_data // 8),
-            "high": (total_data // 16),
+        "num_data_points": {  # TODO
+            "low": (total_data // 16),
+            "mid": (total_data // 25),
+            "high": (total_data // 40),
             "min": 10,
             "max": 200,
             "sample": False,

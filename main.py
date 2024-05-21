@@ -29,14 +29,16 @@ async def main(config: RunConfig):
         await asyncio.gather(simulation_task)
     elif config.option == "deployment":
         logger.info("Starting deployment...")
-        server_task = run_server()
+        server_task = asyncio.create_task(run_server(config))
         logger.info("Server task started. Waiting 10 seconds to start clients...")
-        sleep(10)
+        await asyncio.sleep(10)
         client_tasks = []
         for i in range(Attribute("num_clients", config.concentration).generate()):
-            client_tasks.append(run_client(i, config))
-            sleep(0.5)
-        logger.info("Client tasks (%s) started.", len(client_tasks))
+            client_task = asyncio.create_task(run_client(i, config))
+            client_tasks.append(client_task)
+            logger.info("Client %s task started.", i)
+            await asyncio.sleep(0.5)
+        logger.info("All client tasks (%s) started.", len(client_tasks))
         await asyncio.gather(server_task, *client_tasks)
 
     logger.info("Main finished. Writing to disk...")
@@ -45,7 +47,7 @@ async def main(config: RunConfig):
 
 
 async def run_client(cid: int, config: RunConfig):
-    logger.info("Starting client %s.", cid)
+    # logger.info("Starting client %s.", cid)
     cmd = [
         "python",
         "deploy_client.py",
@@ -59,9 +61,16 @@ async def run_client(cid: int, config: RunConfig):
     await process.wait()
 
 
-async def run_server():
+async def run_server(config: RunConfig):
     # Prepare the command
-    cmd = ["python", "deploy_server.py"]
+    cmd = [
+        "python",
+        "deploy_server.py",
+        f"--resources={config.resources}",
+        f"--concentration={config.concentration}",
+        f"--variability={config.variability}",
+        f"--quality={config.quality}",
+    ]
     process = await asyncio.create_subprocess_exec(*cmd, cwd=os.getcwd())
     await process.wait()
 

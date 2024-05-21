@@ -5,14 +5,14 @@ import datasets
 from datasets import Dataset, DatasetDict
 
 from config.constants import DATA_SAVE_PATH, DATASET
-from torchvision.transforms import ToTensor, Normalize, Compose
+from torchvision.transforms import ToTensor, Normalize, Compose, Resize
 
 
 try:
-    dataset = datasets.load_from_disk(DATA_SAVE_PATH, keep_in_memory=True)
+    dataset = datasets.load_from_disk(DATA_SAVE_PATH, keep_in_memory=False)
 except FileNotFoundError:
     print("Dataset not found, downloading...")
-    dataset = datasets.load_dataset(path=DATASET, keep_in_memory=True)
+    dataset = datasets.load_dataset(path=DATASET, keep_in_memory=False)
     dataset.save_to_disk(DATA_SAVE_PATH)
 
 train_set = dataset["train"]
@@ -25,7 +25,7 @@ def apply_transforms(batch):
     return batch
 
 
-train_set = train_set.shuffle(seed=1010).with_transform(apply_transforms)
+train_set = train_set.shuffle(seed=1010)
 centralized_test_set = centralized_test_set.shuffle(seed=1010).with_transform(
     apply_transforms
 )

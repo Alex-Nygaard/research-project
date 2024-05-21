@@ -45,6 +45,7 @@ def evaluate_fn(
         "rec": rec,
         "prec": prec,
         "f1": f1,
+        "loss": loss,
     }
 
     return loss, output_dict
@@ -68,7 +69,7 @@ def average_metrics(metrics):
     }
 
 
-def get_strategy():
+def get_strategy(min_available_clients: int = 2):
     fraction_fit = 0.5
     fraction_evaluate = 0.5
     logger.info(
@@ -82,4 +83,5 @@ def get_strategy():
         evaluate_fn=evaluate_fn,
         evaluate_metrics_aggregation_fn=average_metrics,
         on_fit_config_fn=fit_config,
+        min_available_clients=min_available_clients,
     )

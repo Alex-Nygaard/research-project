@@ -2,14 +2,13 @@ import math
 import os
 import csv
 
-from datasets import Dataset
 from torch.utils.data import DataLoader
 from flwr.client import NumPyClient
 from datasets.utils.logging import disable_progress_bar
 
-from config.constants import DEVICE, LOG_DIR, NUM_ROUNDS
+from config.constants import DEVICE, LOG_DIR
 from client.network import Net, train, test, eval_learning
-from data.load_data import get_data_for_client
+from data.load_data import get_data_for_client, apply_transforms
 from client.attribute import Attribute
 
 disable_progress_bar()
@@ -62,16 +61,17 @@ class FlowerClient(NumPyClient):
         )
 
         try:
-            self.dataset_dict = get_data_for_client(
+            dataset_dict = get_data_for_client(
                 cid,
                 self.num_data_points,
             )
-            # self.len_train_set = len(self.train_set)
-            # self.len_test_set = len(self.test_set)
+            self.train_set = dataset_dict["train"].with_transform(apply_transforms)
+            self.test_set = dataset_dict["test"].with_transform(apply_transforms)
+            self.len_train_set = len(self.train_set)
+            self.len_test_set = len(self.test_set)
         except Exception as e:
-            print(f"XXXXXX Error: {e}")
-            # self.train_set: Dataset = None
-            # self.test_set: Dataset = None
+            self.train_set = None
+            self.test_set = None
             self.len_train_set = len_train_set if len_train_set is not None else 0
             self.len_test_set = len_test_set if len_test_set is not None else 0
 
@@ -81,14 +81,11 @@ class FlowerClient(NumPyClient):
         current_round = config["current_round"]
 
         idx = math.floor(
-            (self.num_data_points * 0.85) / (1 + (current_round - 1) * self.perc_new_data)
+            (self.num_data_points * 0.85)
+            / (1 + (current_round - 1) * self.perc_new_data)
         )
 
-        print(
-            f"idx={idx},current_round={current_round},num_data_points={self.num_data_points},perc_new_data={self.perc_new_data}"
-        )
-
-        data = self.dataset_dict["train"].select(range(idx))
+        data = self.train_set.select(range(idx))
 
         train_loader = DataLoader(data, batch_size=self.batch_size, shuffle=True)
         train(self.net, train_loader, epochs=self.local_epochs)

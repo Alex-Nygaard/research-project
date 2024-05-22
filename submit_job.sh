@@ -4,7 +4,7 @@
 ### #SBATCH --output=out.sim.%j.out
 ### #SBATCH --error=err.sim.%j.err
 #SBATCH --partition=gpu-a100
-#SBATCH --time=03:00:00
+#SBATCH --time=01:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=24
 #SBATCH --gpus-per-task=1

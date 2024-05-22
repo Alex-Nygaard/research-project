@@ -6,6 +6,12 @@ import scienceplots
 import matplotlib.pyplot as plt
 from config.run_config import RunConfig
 from client.client import FlowerClient
+from visualization.utils import (
+    calculate_mae,
+    calculate_mse,
+    calculate_dtw,
+    calculate_pearson_correlation,
+)
 
 
 class Style:
@@ -84,9 +90,10 @@ class History:
     def get_centralized_metrics(self, run_config: RunConfig) -> Dict[str, Metric]:
         metrics = {}
         for key, data in self.metrics_centralized.items():
-            label = f"{key} - {run_config.code}"
             if key in Metric.styles:
-                metrics[key] = Metric(data, label, key, run_config.get_scenario())
+                metrics[key] = Metric(
+                    data, run_config.get_label(), key, run_config.get_scenario()
+                )
         return metrics
 
     @staticmethod
@@ -169,37 +176,61 @@ class RunData:
 
     @staticmethod
     def many_to_csv(runs: List["RunData"], path: str, filename: str):
+        deployment = next(
+            (run for run in runs if run.run_config.get_scenario() == "deployment"), None
+        )
+        if deployment is None:
+            raise ValueError("No deployment run found in list of runs")
+
         with open(os.path.join(path, filename), "w") as file:
             file.write(
-                "code,max_acc,max_acc_round,max_loss,max_loss_round,loss_conv(80%),loss_conv(90%)\n"
+                "code,max_acc,max_acc_round,acc_conv(80%),acc_conv(90%),max_loss,max_loss_round,loss_conv(80%),loss_conv(90%)\n"
             )
             for run in runs:
                 accuracies = run.metrics.get("accuracy")
                 max_acc, max_acc_round = -1, -1
+                acc_conv_80, acc_conv_90 = -1, -1
                 if accuracies:
                     max_acc_idx = np.argmax(accuracies.y)
                     max_acc = accuracies.y[max_acc_idx]
                     max_acc_round = accuracies.x[max_acc_idx]
 
+                    for i, acc in enumerate(accuracies.y):
+                        if acc > 0.8 * max_acc and acc_conv_80 == -1:
+                            acc_conv_80 = i
+                        if acc > 0.9 * max_acc and acc_conv_90 == -1:
+                            acc_conv_90 = i
+                        if acc_conv_80 != -1 and acc_conv_90 != -1:
+                            break
+
                 losses = run.get_metric("loss")
-                max_loss, max_loss_round = -1, -1
+                min_loss, min_loss_round = -1, -1
                 loss_conv_80, loss_conv_90 = -1, -1
                 if losses:
-                    max_loss_idx = np.argmax(losses.y)
-                    max_loss = losses.y[max_loss_idx]
-                    max_loss_round = losses.x[max_loss_idx]
+                    min_loss_idx = np.argmin(losses.y)
+                    min_loss = losses.y[min_loss_idx]
+                    min_loss_round = losses.x[min_loss_idx]
 
                     for i, loss in enumerate(losses.y):
-                        if loss > 0.8 * max_loss and loss_conv_80 == -1:
+                        if loss < 1.2 * min_loss and loss_conv_80 == -1:
                             loss_conv_80 = i
-                        if loss > 0.9 * max_loss and loss_conv_90 == -1:
+                        if loss < 1.1 * min_loss and loss_conv_90 == -1:
                             loss_conv_90 = i
                         if loss_conv_80 != -1 and loss_conv_90 != -1:
                             break
 
-                file.write(
-                    f"{run.run_config.code},{max_acc},{max_acc_round},{max_loss},{max_loss_round},{loss_conv_80},{loss_conv_90}\n"
-                )
+                data = [
+                    run.run_config.code,
+                    max_acc,
+                    max_acc_round,
+                    acc_conv_80,
+                    acc_conv_90,
+                    min_loss,
+                    min_loss_round,
+                    loss_conv_80,
+                    loss_conv_90,
+                ]
+                file.write(",".join([str(e) for e in data]) + "\n")
             file.flush()
 
     @staticmethod

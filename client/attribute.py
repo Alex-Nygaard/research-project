@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+import ast
 
 np.random.seed(1010)
 
@@ -24,16 +25,16 @@ class Attribute:
             "type": int,
         },
         "num_clients": {  # TODO reduce
-            "low": 16,
+            "low": 40,
             "mid": 25,
-            "high": 40,
+            "high": 16,
             "sample": False,
             "type": int,
         },
         "num_data_points": {  # TODO
-            "low": (total_data // 16),
+            "low": (total_data // 40),
             "mid": (total_data // 25),
-            "high": (total_data // 40),
+            "high": (total_data // 16),
             "min": 10,
             "max": 200,
             "sample": False,
@@ -59,6 +60,7 @@ class Attribute:
         },
         "len_train_set": {"type": int},
         "len_test_set": {"type": int},
+        "train_set_lengths": {"type": lambda x: ast.literal_eval(x)},
     }
 
     rng = np.random.default_rng(seed=1010)

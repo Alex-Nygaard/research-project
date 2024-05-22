@@ -21,7 +21,9 @@ if __name__ == "__main__":
     variability = args.variability
     quality = args.quality
 
-    logger.info("Starting server.")
+    logger.info(
+        f"Starting server with args: resources={resources}, concentration={concentration}, variability={variability}, quality={quality}"
+    )
     logger.info(f"NUM_ROUNDS: {NUM_ROUNDS}")
 
     history = fl.server.start_server(

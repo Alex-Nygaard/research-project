@@ -45,20 +45,36 @@ def plot_single_metric(metric: Metric):
 
 def create():
 
-    # new version run_3739099 (dep), run_3739100, run_3739101, run_3739102
+    # new version run_3740021 (dep), run_3740022, run_3740023, run_3740024
 
-    # deployment = RunData.build("run_3739099")
-    simulations = RunData.build_many(["run_3739100", "run_3739101", "run_3739102"])
+    # runs = RunData.build_many(
+    #     ["run_3739595", "run_3739596", "run_3739569", "run_3739568"]
+    # )
 
-    runs = simulations  # [deployment] +
+    deployment = ["run_3740021"]
+    simulation_base = ["run_3740023"]
 
-    for key in ["accuracy"]:  # , "loss"]:
-        plot_metrics(
-            [run.get_metric(key) for run in runs],
-            title=f"{key.capitalize()} per Round",
-            x_label="Round number",
-            y_label=key.capitalize(),
-            save_dir=f"for-report/{key}.png",
-        )
+    simulation_concentration = ["run_3740022", "run_3740024"]
+    simulation_resources = ["run_3740245", "run_3740246"]
+    simulation_variability = ["run_3740247", "run_3740248"]
 
-    RunData.many_to_csv(simulations, "for-report", "results.csv")
+    run_combinations = {
+        "concentration": deployment + simulation_base + simulation_concentration,
+        "resources": deployment + simulation_base + simulation_resources,
+        "variability": deployment + simulation_base + simulation_variability,
+    }
+
+    run_combinations = {
+        key: RunData.build_many(runs) for key, runs in run_combinations.items()
+    }
+
+    for category, runs in run_combinations.items():
+        for key in ["accuracy", "loss"]:
+            plot_metrics(
+                [run.get_metric(key) for run in runs],
+                title=f"{key.capitalize()} per Round",
+                x_label="Round number",
+                y_label=key.capitalize(),
+                save_dir=f"for-report/{category}-{key}.png",
+            )
+        RunData.many_to_csv(runs, "for-report", f"{category}-results.csv")

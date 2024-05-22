@@ -73,9 +73,10 @@ def get_strategy(min_available_clients: int = 2):
     fraction_fit = 0.5
     fraction_evaluate = 0.5
     logger.info(
-        "Using custom strategy. (fraction_fit=%s, fraction_evaluate=%s)",
+        "Using custom strategy. (fraction_fit=%s, fraction_evaluate=%s, min_available_clients=%s)",
         fraction_fit,
         fraction_evaluate,
+        min_available_clients,
     )
     return FedCustom(
         fraction_fit=fraction_fit,

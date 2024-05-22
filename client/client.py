@@ -1,6 +1,7 @@
 import math
 import os
 import csv
+from typing import List, Tuple
 
 from torch.utils.data import DataLoader
 from flwr.client import NumPyClient
@@ -25,6 +26,7 @@ class FlowerClient(NumPyClient):
         "perc_missing_labels",
         "len_train_set",
         "len_test_set",
+        "train_set_lengths",
     ]
 
     def __init__(
@@ -41,6 +43,9 @@ class FlowerClient(NumPyClient):
         perc_missing_labels: float = None,
         len_train_set: int = None,
         len_test_set: int = None,
+        train_set_lengths: List[Tuple[int, int]] = None,
+        *args,
+        **kwargs,
     ):
         self.cid = cid
         self.net = Net().to(DEVICE)
@@ -58,6 +63,10 @@ class FlowerClient(NumPyClient):
         )
         self.perc_missing_labels = (
             perc_missing_labels or Attribute("perc_missing_labels", quality).generate()
+        )
+
+        self.train_set_lengths: List[Tuple[int, int]] = (
+            train_set_lengths if train_set_lengths is not None else []
         )
 
         try:
@@ -81,11 +90,12 @@ class FlowerClient(NumPyClient):
         current_round = config["current_round"]
 
         idx = math.floor(
-            (self.num_data_points * 0.85)
+            (self.num_data_points * 0.85)  # size of train set
             / (1 + (current_round - 1) * self.perc_new_data)
         )
 
         data = self.train_set.select(range(idx))
+        self.train_set_lengths.append((current_round, len(data)))
 
         train_loader = DataLoader(data, batch_size=self.batch_size, shuffle=True)
         train(self.net, train_loader, epochs=self.local_epochs)
@@ -131,6 +141,9 @@ class FlowerClient(NumPyClient):
         perc_missing_labels,
         len_train_set,
         len_test_set,
+        train_set_lengths,
+        *args,
+        **kwargs,
     ):
         return FlowerClient(
             cid=cid,
@@ -141,6 +154,9 @@ class FlowerClient(NumPyClient):
             perc_missing_labels=perc_missing_labels,
             len_train_set=len_train_set,
             len_test_set=len_test_set,
+            train_set_lengths=train_set_lengths,
+            *args,
+            **kwargs,
         )
 
     def write_to_csv(self, path, filename):

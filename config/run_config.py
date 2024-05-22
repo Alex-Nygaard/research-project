@@ -27,7 +27,6 @@ class RunConfig:
         )
 
     def get_scenario(self):
-        scenario = ""
         if self.option == "deployment":
             scenario = "deployment"
         elif "low" in [
@@ -47,6 +46,19 @@ class RunConfig:
         else:
             scenario = "mid"
         return scenario
+
+    def get_label(self):
+        if self.resources != "mid":
+            tag = f"Resources = {self.resources.upper()}"
+        elif self.concentration != "mid":
+            tag = f"Concentration = {self.concentration.upper()}"
+        elif self.variability != "mid":
+            tag = f"Variability = {self.variability.upper()}"
+        elif self.quality != "mid":
+            tag = f"Quality = {self.quality.upper()}"
+        else:
+            tag = "Base"
+        return f"{self.option.capitalize()} - {tag}"
 
     def write_to_json(self, path: str, filename: str):
         full_path = os.path.join(path, filename)

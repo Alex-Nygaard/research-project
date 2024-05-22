@@ -46,7 +46,11 @@ def calculate_dtw(sequence1, sequence2):
     Returns:
     float: DTW distance between the two sequences.
     """
-    distance, path = fastdtw(sequence1, sequence2, dist=euclidean)
+    distance, path = fastdtw(
+        np.array(sequence1, dtype="float"),
+        np.array(sequence2, dtype="float"),
+        dist=2,
+    )
     return distance
 
 

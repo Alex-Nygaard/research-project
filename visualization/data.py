@@ -184,7 +184,7 @@ class RunData:
 
         with open(os.path.join(path, filename), "w") as file:
             file.write(
-                "code,max_acc,max_acc_round,acc_conv(80%),acc_conv(90%),max_loss,max_loss_round,loss_conv(80%),loss_conv(90%)\n"
+                "code,max_acc,max_acc_round,acc_conv(80%),acc_conv(90%),min_loss,min_loss_round,loss_conv(80%),loss_conv(90%),mse,mae,dtw,pearson\n"
             )
             for run in runs:
                 accuracies = run.metrics.get("accuracy")
@@ -229,6 +229,18 @@ class RunData:
                     min_loss_round,
                     loss_conv_80,
                     loss_conv_90,
+                    calculate_mse(
+                        run.get_metric("loss").y, deployment.get_metric("loss").y
+                    ),
+                    calculate_mae(
+                        run.get_metric("loss").y, deployment.get_metric("loss").y
+                    ),
+                    calculate_dtw(
+                        run.get_metric("loss").y, deployment.get_metric("loss").y
+                    ),
+                    calculate_pearson_correlation(
+                        run.get_metric("loss").y, deployment.get_metric("loss").y
+                    ),
                 ]
                 file.write(",".join([str(e) for e in data]) + "\n")
             file.flush()

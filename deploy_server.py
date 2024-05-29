@@ -19,10 +19,10 @@ if __name__ == "__main__":
     resources = args.resources
     concentration = args.concentration
     variability = args.variability
-    quality = args.quality
+    distribution = args.distribution
 
     logger.info(
-        f"Starting server with args: resources={resources}, concentration={concentration}, variability={variability}, quality={quality}"
+        f"Starting server with args: resources={resources}, concentration={concentration}, variability={variability}, distribution={distribution}"
     )
     logger.info(f"NUM_ROUNDS: {NUM_ROUNDS}")
 

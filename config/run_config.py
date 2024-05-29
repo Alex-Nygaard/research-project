@@ -14,17 +14,15 @@ class RunConfig:
         resources: str,
         concentration: str,
         variability: str,
-        quality: str,
+        distribution: str,
     ):
         self.run_id = run_id
         self.option = option
         self.resources = resources
         self.concentration = concentration
         self.variability = variability
-        self.quality = quality
-        self.code = (
-            f"{option[:3]}_R-{resources}_C-{concentration}_V-{variability}_Q-{quality}"
-        )
+        self.distribution = distribution
+        self.code = f"{option[:3]}_R-{resources}_C-{concentration}_V-{variability}_D-{distribution}"
 
     def get_scenario(self):
         if self.option == "deployment":
@@ -33,14 +31,14 @@ class RunConfig:
             self.resources,
             self.concentration,
             self.variability,
-            self.quality,
+            self.distribution,
         ]:
             scenario = "low"
         elif "high" in [
             self.resources,
             self.concentration,
             self.variability,
-            self.quality,
+            self.distribution,
         ]:
             scenario = "high"
         else:
@@ -54,8 +52,8 @@ class RunConfig:
             tag = f"Concentration = {self.concentration.upper()}"
         elif self.variability != "mid":
             tag = f"Variability = {self.variability.upper()}"
-        elif self.quality != "mid":
-            tag = f"Quality = {self.quality.upper()}"
+        elif self.distribution != "mid":
+            tag = f"distribution = {self.distribution.upper()}"
         else:
             tag = "Base"
         return f"{self.option.capitalize()} - {tag}"
@@ -76,7 +74,7 @@ class RunConfig:
             resources=data.get("resources", "INVALID_RES"),
             concentration=data.get("concentration", "INVALID_CONC"),
             variability=data.get("variability", "INVALID_VAR"),
-            quality=data.get("quality", "INVALID_QUAL"),
+            distribution=data.get("distribution", "INVALID_DIST"),
         )
 
     @staticmethod

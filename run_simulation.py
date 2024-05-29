@@ -16,7 +16,7 @@ if __name__ == "__main__":
     resources = args.resources
     concentration = args.concentration
     variability = args.variability
-    quality = args.quality
+    distribution = args.distribution
 
     logger = get_logger("simulation.run")
     fl.common.logger.configure(
@@ -27,11 +27,11 @@ if __name__ == "__main__":
     num_gpus = int(os.environ.get("SLURM_GPUS_PER_TASK", 0))
 
     logger.info(
-        "RUNNING SIMULATION with resources=%s,concentration=%s,variability=%s,quality=%s,num_cpus=%s,num_gpus=%s",
+        "RUNNING SIMULATION with resources=%s,concentration=%s,variability=%s,distribution=%s,num_cpus=%s,num_gpus=%s",
         resources,
         concentration,
         variability,
-        quality,
+        distribution,
         num_cpus,
         num_gpus,
     )
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     history = fl.simulation.start_simulation(
         num_clients=Attribute("num_clients", concentration).generate(),
         config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
-        client_fn=get_client_fn(resources, concentration, variability, quality),
+        client_fn=get_client_fn(resources, concentration, variability, distribution),
         strategy=get_strategy(),
         ray_init_args={
             "num_cpus": num_cpus,

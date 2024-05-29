@@ -15,7 +15,7 @@ if __name__ == "__main__":
     resources = args.resources
     concentration = args.concentration
     variability = args.variability
-    quality = args.quality
+    distribution = args.distribution
 
     logger = get_logger(f"client-{cid}.deploy")
     fl.common.logger.configure(
@@ -27,6 +27,6 @@ if __name__ == "__main__":
     fl.client.start_client(
         server_address="127.0.0.1:5040",
         client_fn=get_client_fn(
-            resources, concentration, variability, quality, deployment_id=cid
+            resources, concentration, variability, distribution, deployment_id=cid
         ),
     )

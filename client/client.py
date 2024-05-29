@@ -35,7 +35,7 @@ class FlowerClient(NumPyClient):
         resources: str = "mid",
         concentration: str = "mid",
         variability: str = "mid",
-        quality: str = "mid",
+        distribution: str = "mid",
         batch_size: int = None,
         local_epochs: int = None,
         num_data_points: int = None,
@@ -62,7 +62,8 @@ class FlowerClient(NumPyClient):
             perc_new_data or Attribute("perc_new_data", variability).generate()
         )
         self.perc_missing_labels = (
-            perc_missing_labels or Attribute("perc_missing_labels", quality).generate()
+            perc_missing_labels
+            or Attribute("perc_missing_labels", distribution).generate()
         )
 
         self.train_set_lengths: List[Tuple[int, int]] = (
@@ -200,7 +201,7 @@ def get_client_fn(
     resources: str = "mid",
     concentration: str = "mid",
     variability: str = "mid",
-    quality: str = "mid",
+    distribution: str = "mid",
     deployment_id: int = None,
 ):
     def client_fn(simulation_id: str):
@@ -216,7 +217,7 @@ def get_client_fn(
             resources=resources,
             concentration=concentration,
             variability=variability,
-            quality=quality,
+            distribution=distribution,
         )
         client.write_to_csv(LOG_DIR, "clients.csv")
         return client.to_client()

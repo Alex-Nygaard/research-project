@@ -17,4 +17,4 @@ DEVICE = torch.device(HARDWARE_TYPE)
 DATASET = "cifar10"
 DATA_SAVE_PATH = "data/storage"
 
-NUM_ROUNDS = 50
+NUM_ROUNDS = 100

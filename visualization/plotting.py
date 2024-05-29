@@ -48,18 +48,21 @@ def plot_single_metric(metric: Metric):
 
 def create():
 
-    # new version run_3740021 (dep), run_3740022, run_3740023, run_3740024
+    # 50 ROUNDS
+    # deployment = ["run_3740021"]
+    # simulation_base = ["run_3740023"]
+    #
+    # simulation_concentration = ["run_3740022", "run_3740024"]
+    # simulation_resources = ["run_3740245", "run_3740246"]
+    # simulation_variability = ["run_3740247", "run_3740248"]
 
-    # runs = RunData.build_many(
-    #     ["run_3739595", "run_3739596", "run_3739569", "run_3739568"]
-    # )
+    # 100 ROUNDS
+    deployment = ["run_3749632"]
+    simulation_base = ["run_3749633"]
 
-    deployment = ["run_3740021"]
-    simulation_base = ["run_3740023"]
-
-    simulation_concentration = ["run_3740022", "run_3740024"]
-    simulation_resources = ["run_3740245", "run_3740246"]
-    simulation_variability = ["run_3740247", "run_3740248"]
+    simulation_resources = ["run_3749634", "run_3749635"]
+    simulation_variability = ["run_3749636", "run_3749637"]
+    simulation_concentration = ["run_3749638", "run_3749639"]
 
     run_combinations = {
         "concentration": deployment + simulation_base + simulation_concentration,
@@ -71,7 +74,8 @@ def create():
     }
 
     all_csv_files = []
-    output_path = "for-report"
+    output_path = "for-report/100"
+    os.makedirs(output_path, exist_ok=True)
 
     for category, runs in run_combinations.items():
         for key in ["accuracy", "loss"]:
@@ -80,7 +84,7 @@ def create():
                 title=f"{key.capitalize()} per Round",
                 x_label="Round number",
                 y_label=key.capitalize(),
-                save_dir=f"for-report/{category}-{key}.png",
+                save_dir=os.path.join(output_path, f"{category}-{key}.png"),
             )
 
         filename = f"{category}-results.csv"

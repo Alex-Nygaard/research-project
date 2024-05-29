@@ -21,7 +21,7 @@ class Attribute:
             "high": 7,
             "min": 1,
             "max": 10,
-            "sample": True,
+            "sample": False,
             "type": int,
         },
         "num_clients": {  # TODO reduce
@@ -46,7 +46,7 @@ class Attribute:
             "high": 0.15,
             "min": 0.0,
             "max": 0.2,
-            "sample": True,
+            "sample": False,
             "type": lambda x: round(float(x), 2),
         },
         "perc_missing_labels": {
@@ -55,7 +55,7 @@ class Attribute:
             "high": 0.3,
             "min": 0.0,
             "max": 0.5,
-            "sample": True,
+            "sample": False,
             "type": lambda x: round(float(x), 2),
         },
         "len_train_set": {"type": int},

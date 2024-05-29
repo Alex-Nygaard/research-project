@@ -29,12 +29,12 @@ def get_base_parser(description: str):
         help="Variability attribute variation.",
     )
     parser.add_argument(
-        "--quality",
+        "--distribution",
         type=str,
         choices=["low", "mid", "high"],
         default="mid",
         nargs="?",
-        help="Quality attribute variation.",
+        help="Distribution attribute variation.",
     )
 
     return parser

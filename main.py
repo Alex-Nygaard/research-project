@@ -55,7 +55,7 @@ async def run_client(cid: int, config: RunConfig):
         f"--resources={config.resources}",
         f"--concentration={config.concentration}",
         f"--variability={config.variability}",
-        f"--quality={config.quality}",
+        f"--distribution={config.distribution}",
     ]
     process = await asyncio.create_subprocess_exec(*cmd, cwd=os.getcwd())
     await process.wait()
@@ -69,7 +69,7 @@ async def run_server(config: RunConfig):
         f"--resources={config.resources}",
         f"--concentration={config.concentration}",
         f"--variability={config.variability}",
-        f"--quality={config.quality}",
+        f"--distribution={config.distribution}",
     ]
     process = await asyncio.create_subprocess_exec(*cmd, cwd=os.getcwd())
     await process.wait()
@@ -82,7 +82,7 @@ async def run_simulation(config: RunConfig):
         f"--resources={config.resources}",
         f"--concentration={config.concentration}",
         f"--variability={config.variability}",
-        f"--quality={config.quality}",
+        f"--distribution={config.distribution}",
     ]
     process = await asyncio.create_subprocess_exec(*cmd, cwd=os.getcwd())
     await process.wait()
@@ -106,10 +106,10 @@ if __name__ == "__main__":
     resources = args.resources
     concentration = args.concentration
     variability = args.variability
-    quality = args.quality
+    distribution = args.distribution
 
     run_config = RunConfig(
-        RUN_ID, option, resources, concentration, variability, quality
+        RUN_ID, option, resources, concentration, variability, distribution
     )
     logger.info("Run config: %s", run_config)
 

@@ -1,5 +1,6 @@
 import json
 import os
+import pickle
 from typing import Optional
 import random
 
@@ -9,7 +10,11 @@ from datasets.utils.logging import disable_progress_bar
 
 from config.constants import DEVICE, LOG_DIR
 from client.network import Net, train, test, eval_learning
-from data.noniid_load_dataset import load_datasets
+from data.noniid_load_dataset import (
+    load_datasets,
+    get_dirichlet_idxs,
+    get_replicate_idxs,
+)
 from logger.logger import get_logger
 
 disable_progress_bar()
@@ -94,59 +99,127 @@ class FlowerClient(NumPyClient):
         list,
         list,
         list,
+        list,
     ]:
         with open(full_path, "r") as file:
             data = json.load(file)
 
+        idxs = [data[key]["idxs"] for key in data.keys()]
         batch_sizes = [data[key]["batch_size"] for key in data.keys()]
         local_epochs = [data[key]["local_epochs"] for key in data.keys()]
         data_volume = [data[key]["data_volume"] for key in data.keys()]
         data_labels = [data[key]["data_labels"] for key in data.keys()]
 
-        return batch_sizes, local_epochs, data_volume, data_labels
+        return idxs, batch_sizes, local_epochs, data_volume, data_labels
 
     @classmethod
     def write_to_json(cls, data: dict, full_path):
         with open(full_path, mode="w") as file:
             json.dump(data, file, indent=4)
 
+    """
+    num_clients: int,
+    option: str,
+    trace_file: str = "",
+    batch_size: str = "iid",
+    local_epochs: str = "iid",
+    data_volume: str = "iid",
+    data_labels: str = "iid",
+    """
+
+    @classmethod
+    def generate_simulation_clients(
+        cls,
+        num_clients: int,
+        output_path: str,
+        trace_file: str = None,
+        batch_size: str = "iid",
+        local_epochs: str = "iid",
+        data_volume: str = "iid",
+        data_labels: str = "iid",
+    ):
+        unused_idxs, batches, epochs, datapoints, labels = (
+            FlowerClient.read_attributes_from_json(
+                trace_file
+                if trace_file is not None
+                else os.path.join("clients", "testing_clients.json")
+            )
+        )
+
+        if batch_size == "iid":
+            bs = [32] * num_clients
+        else:
+            bs = batches
+
+        if local_epochs == "iid":
+            le = [4] * num_clients
+        else:
+            le = epochs
+
+        if data_volume == "iid":
+            dv = [50_000 // num_clients] * num_clients
+        else:
+            dv = datapoints
+
+        if data_labels == "iid":
+            dl = [10] * num_clients
+        else:
+            dl = labels
+
+        client_idxs, data_volume, data_labels = get_replicate_idxs(num_clients, dv, dl)
+
+        client_attributes = {}
+        for cid, idxs, batch_size, local_epoch, volume, label in zip(
+            range(num_clients),
+            client_idxs,
+            bs,
+            le,
+            data_volume,
+            data_labels,
+        ):
+            client_attributes[cid] = {
+                "cid": cid,
+                "idxs": idxs,
+                "batch_size": batch_size,
+                "local_epoch": local_epoch,
+                "data_volume": volume,
+                "data_labels": label,
+            }
+
+        with open(output_path, mode="w") as file:
+            json.dump(client_attributes, file, indent=4)
+
     @classmethod
     def generate_deployment_clients(
         cls,
-        num: int,
+        num_clients: int,
         output_paths: list[str],
     ):
         bs_opts = [16, 32, 64, 128]
         le_opts = [1, 3, 5, 7]
 
-        batch_sizes = [random.choice(bs_opts) for _ in range(num)]
-        local_epochs = [random.choice(le_opts) for _ in range(num)]
+        batch_sizes = [random.choice(bs_opts) for _ in range(num_clients)]
+        local_epochs = [random.choice(le_opts) for _ in range(num_clients)]
 
-        train_datasets, test_datasets, valid_set = load_datasets(
-            {
-                "partitioning": "dirichlet",
-                "alpha": 0.5,
-                "batch_sizes": batch_sizes,
-                "name": "cifar10",
-            },
-            num_clients=num,
-        )
+        client_idxs, data_volumes, data_labels = get_dirichlet_idxs(num_clients)
 
         client_attributes = {}
-        for cid, train_dl, test_dl, batch_size, local_epoch in zip(
-            range(num), train_datasets, test_datasets, batch_sizes, local_epochs
+        for cid, idxs, batch_size, local_epoch, volume, label in zip(
+            range(num_clients),
+            client_idxs,
+            batch_sizes,
+            local_epochs,
+            data_volumes,
+            data_labels,
         ):
-            client = FlowerClient(
-                cid=cid,
-                batch_size=batch_size,
-                local_epochs=local_epoch,
-                data_volume=len(train_dl.dataset) + len(test_dl.dataset),
-                data_labels=len(
-                    set([ex[1] for ex in train_dl.dataset])
-                    | set([ex[1] for ex in train_dl.dataset])
-                ),
-            )
-            client_attributes[cid] = client.attributes.__dict__
+            client_attributes[cid] = {
+                "cid": cid,
+                "idxs": idxs,
+                "batch_size": batch_size,
+                "local_epoch": local_epoch,
+                "data_volume": volume,
+                "data_labels": label,
+            }
 
         for path in output_paths:
             log.info(f"Writing client attributes to {path}...")

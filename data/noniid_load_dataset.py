@@ -3,17 +3,79 @@
 from typing import List, Optional, Tuple
 
 import torch
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, random_split, Subset
 
 from .noniid_dataset_preparation import (
-    partition_data,
+    # partition_data,
     partition_data_dirichlet,
-    partition_data_label_quantity,
-    partition_data_counts,
-    partition_data_varying_labels,
-    partition_data_varying_labels_equal_num,
     partition_data_custom,
+    get_dirichlet_info,
+    get_custom_info,
+    _download_data,
+    # partition_data_label_quantity,
+    # partition_data_counts,
+    # partition_data_varying_labels,
+    # partition_data_varying_labels_equal_num,
 )
+
+
+def load_datasets_with_idxs(name: str, train: bool = True):
+    pass
+
+
+def get_dirichlet_idxs(num_clients: int, val_ratio: float = 0.1, seed: int = 42):
+    idxs, data_volume, data_labels = get_dirichlet_info(
+        num_clients, alpha=0.5, seed=seed
+    )
+
+    return idxs, data_volume, data_labels
+
+
+def get_replicate_idxs(
+    num_clients: int,
+    datapoints_per_client: List[int],
+    labels_per_client: List[int],
+    val_ratio: float = 0.1,
+    seed: int = 42,
+):
+    idxs, data_volume, data_labels = get_custom_info(
+        num_clients,
+        datapoints_per_client=datapoints_per_client,
+        labels_per_client=labels_per_client,
+        seed=seed,
+    )
+
+    return idxs, data_volume, data_labels
+
+
+def load_with_idxs(
+    idx_clients: List[List[int]],
+    batch_sizes: List[int],
+    dataset_name: str,
+    download: bool = False,
+    val_ratio: float = 0.1,
+    seed: int = 42,
+):
+    trainset, testset = _download_data(dataset_name, download=download)
+
+    datasets = [Subset(trainset, idxs) for idxs in idx_clients]
+
+    # split each partition into train/val and create DataLoader
+    trainloaders = []
+    valloaders = []
+    for batch_size, dataset in zip(batch_sizes, datasets):
+        len_val = int(len(dataset) / (1 / val_ratio)) if val_ratio > 0 else 0
+        lengths = [len(dataset) - len_val, len_val]
+        ds_train, ds_val = random_split(
+            dataset, lengths, torch.Generator().manual_seed(seed)
+        )
+        trainloaders.append(DataLoader(ds_train, batch_size=batch_size, shuffle=True))
+        valloaders.append(DataLoader(ds_val, batch_size=batch_size))
+    return (
+        trainloaders,
+        valloaders,
+        DataLoader(testset, batch_size=64),
+    )
 
 
 # pylint: disable=too-many-locals, too-many-branches
@@ -54,50 +116,6 @@ def load_datasets(
         datasets, testset = partition_data_dirichlet(
             num_clients,
             alpha=alpha,
-            seed=seed,
-            dataset_name=config["name"],
-        )
-    elif partitioning == "label_quantity":
-        labels_per_client = 2
-        if "labels_per_client" in config:
-            labels_per_client = config["labels_per_client"]
-        datasets, testset = partition_data_label_quantity(
-            num_clients,
-            labels_per_client=labels_per_client,
-            seed=seed,
-            dataset_name=config["name"],
-        )
-    elif partitioning == "iid":
-        datasets, testset = partition_data(
-            num_clients,
-            similarity=1.0,
-            seed=seed,
-            dataset_name=config["name"],
-        )
-    elif partitioning == "iid_noniid":
-        similarity = 0.1
-        if "similarity" in config:
-            similarity = config["similarity"]
-        datasets, testset = partition_data(
-            num_clients,
-            similarity=similarity,
-            seed=seed,
-            dataset_name=config["name"],
-        )
-    elif partitioning == "counts":
-        counts = config["counts"]
-        datasets, testset = partition_data_counts(
-            counts, seed=seed, dataset_name=config["name"]
-        )
-    elif partitioning == "labels_noniid":
-        datasets, testset = partition_data_varying_labels(
-            num_clients,
-            seed=seed,
-            dataset_name=config["name"],
-        )
-    elif partitioning == "labels_noniid_equal":
-        datasets, testset = partition_data_varying_labels_equal_num(
-            num_clients,
             seed=seed,
             dataset_name=config["name"],
         )

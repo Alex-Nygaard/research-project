@@ -1,10 +1,9 @@
 import os
 import asyncio
-import argparse
 from time import sleep
 import flwr as fl
 
-from client.attribute import Attribute
+from client.client import FlowerClient
 from config.run_config import RunConfig
 from config.constants import LOG_DIR, RUN_ID
 from config.structure import create_output_structure
@@ -21,7 +20,6 @@ fl.common.logger.configure(
 
 
 async def main(config: RunConfig):
-
     if config.option == "simulation":
         logger.info("Starting simulation...")
         simulation_task = run_simulation(config)
@@ -29,11 +27,17 @@ async def main(config: RunConfig):
         await asyncio.gather(simulation_task)
     elif config.option == "deployment":
         logger.info("Starting deployment...")
+
+        logger.info("Generating client config...")
+        FlowerClient.generate_deployment_clients(
+            config.num_clients, LOG_DIR, "clients.json"
+        )
+
         server_task = asyncio.create_task(run_server(config))
         logger.info("Server task started. Waiting 10 seconds to start clients...")
         await asyncio.sleep(10)
         client_tasks = []
-        for i in range(Attribute("num_clients", config.concentration).generate()):
+        for i in range(config.num_clients):
             client_task = asyncio.create_task(run_client(i, config))
             client_tasks.append(client_task)
             logger.info("Client %s task started.", i)
@@ -52,10 +56,11 @@ async def run_client(cid: int, config: RunConfig):
         "python",
         "deploy_client.py",
         f"--cid={cid}",
-        f"--resources={config.resources}",
-        f"--concentration={config.concentration}",
-        f"--variability={config.variability}",
-        f"--distribution={config.distribution}",
+        f"--num_clients={config.num_clients}",
+        f"--batch_size={config.batch_size}",
+        f"--local_epochs={config.local_epochs}",
+        f"--data_volume={config.data_volume}",
+        f"--data_labels={config.data_labels}",
     ]
     process = await asyncio.create_subprocess_exec(*cmd, cwd=os.getcwd())
     await process.wait()
@@ -66,10 +71,11 @@ async def run_server(config: RunConfig):
     cmd = [
         "python",
         "deploy_server.py",
-        f"--resources={config.resources}",
-        f"--concentration={config.concentration}",
-        f"--variability={config.variability}",
-        f"--distribution={config.distribution}",
+        f"--num_clients={config.num_clients}",
+        f"--batch_size={config.batch_size}",
+        f"--local_epochs={config.local_epochs}",
+        f"--data_volume={config.data_volume}",
+        f"--data_labels={config.data_labels}",
     ]
     process = await asyncio.create_subprocess_exec(*cmd, cwd=os.getcwd())
     await process.wait()
@@ -79,10 +85,12 @@ async def run_simulation(config: RunConfig):
     cmd = [
         "python",
         "run_simulation.py",
-        f"--resources={config.resources}",
-        f"--concentration={config.concentration}",
-        f"--variability={config.variability}",
-        f"--distribution={config.distribution}",
+        f"--num_clients={config.num_clients}",
+        f"--trace_file={config.trace_file}",
+        f"--batch_size={config.batch_size}",
+        f"--local_epochs={config.local_epochs}",
+        f"--data_volume={config.data_volume}",
+        f"--data_labels={config.data_labels}",
     ]
     process = await asyncio.create_subprocess_exec(*cmd, cwd=os.getcwd())
     await process.wait()
@@ -92,6 +100,7 @@ if __name__ == "__main__":
     logger.info("Starting main.")
     sleep(0.5)
     parser = get_base_parser("FL simulation and deployment runner.")
+
     parser.add_argument(
         "--option",
         type=str,
@@ -102,14 +111,23 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+    num_clients = args.num_clients
     option = args.option
-    resources = args.resources
-    concentration = args.concentration
-    variability = args.variability
-    distribution = args.distribution
+    trace_file = args.trace_file
+    batch_size = args.batch_size
+    local_epochs = args.local_epochs
+    data_volume = args.data_volume
+    data_labels = args.data_labels
 
     run_config = RunConfig(
-        RUN_ID, option, resources, concentration, variability, distribution
+        run_id=RUN_ID,
+        num_clients=num_clients,
+        option=option,
+        trace_file=trace_file,
+        batch_size=batch_size,
+        local_epochs=local_epochs,
+        data_volume=data_volume,
+        data_labels=data_labels,
     )
     logger.info("Run config: %s", run_config)
 

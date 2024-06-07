@@ -1,7 +1,6 @@
 import os
 import flwr as fl
 
-from client.attribute import Attribute
 from strategy.strategy import get_strategy
 from client.client import get_client_fn
 from config.constants import NUM_ROUNDS, LOG_DIR
@@ -13,10 +12,12 @@ if __name__ == "__main__":
     parser = get_base_parser("Running a simulation.")
 
     args = parser.parse_args()
-    resources = args.resources
-    concentration = args.concentration
-    variability = args.variability
-    distribution = args.distribution
+    num_clients = args.num_clients
+    batch_size = args.batch_size
+    local_epochs = args.local_epochs
+    data_volume = args.data_volume
+    data_labels = args.data_labels
+    trace_file = args.trace_file
 
     logger = get_logger("simulation.run")
     fl.common.logger.configure(
@@ -27,19 +28,27 @@ if __name__ == "__main__":
     num_gpus = int(os.environ.get("SLURM_GPUS_PER_TASK", 0))
 
     logger.info(
-        "RUNNING SIMULATION with resources=%s,concentration=%s,variability=%s,distribution=%s,num_cpus=%s,num_gpus=%s",
-        resources,
-        concentration,
-        variability,
-        distribution,
+        "RUNNING SIMULATION with batch_size=%s,local_epochs=%s,data_volume=%s,data_labels=%s,num_cpus=%s,num_gpus=%s",
+        batch_size,
+        local_epochs,
+        data_volume,
+        data_labels,
         num_cpus,
         num_gpus,
     )
 
     history = fl.simulation.start_simulation(
-        num_clients=Attribute("num_clients", concentration).generate(),
+        num_clients=num_clients,
         config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
-        client_fn=get_client_fn(resources, concentration, variability, distribution),
+        client_fn=get_client_fn(
+            num_clients=num_clients,
+            option="simulation",
+            trace_file=trace_file,
+            batch_sizes=batch_size,
+            local_epochs=local_epochs,
+            num_datapoints=data_volume,
+            num_labels=data_labels,
+        ),
         strategy=get_strategy(),
         ray_init_args={
             "num_cpus": num_cpus,

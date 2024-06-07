@@ -12,10 +12,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     cid = args.cid
-    resources = args.resources
-    concentration = args.concentration
-    variability = args.variability
-    distribution = args.distribution
+    num_clients = args.num_clients
+    batch_size = args.batch_size
+    local_epochs = args.local_epochs
+    data_volume = args.data_volume
+    data_labels = args.data_labels
 
     logger = get_logger(f"client-{cid}.deploy")
     fl.common.logger.configure(
@@ -27,6 +28,12 @@ if __name__ == "__main__":
     fl.client.start_client(
         server_address="127.0.0.1:5040",
         client_fn=get_client_fn(
-            resources, concentration, variability, distribution, deployment_id=cid
+            num_clients=num_clients,
+            option="deployment",
+            batch_sizes=batch_size,
+            local_epochs=local_epochs,
+            num_datapoints=data_volume,
+            num_labels=data_labels,
+            deployment_id=cid,
         ),
     )

@@ -146,8 +146,9 @@ def train(net, trainloader, epochs):
 
     for _ in range(epochs):
         for batch in trainloader:
-            images = batch["img"]
-            labels = batch["label"]
+            assert len(batch) == 2, f"Batch should have 2 elements, got {len(batch)}"
+            images = batch[0]
+            labels = batch[1]
             optimizer.zero_grad()
             criterion(net(images.to(DEVICE)), labels.to(DEVICE)).backward()
             optimizer.step()
@@ -158,8 +159,9 @@ def test(net, testloader):
     correct, loss = 0, 0.0
     with torch.no_grad():
         for batch in testloader:
-            images = batch["img"].to(DEVICE)
-            labels = batch["label"].to(DEVICE)
+            assert len(batch) == 2, f"Batch should have 2 elements, got {len(batch)}"
+            images = get_data(batch).to(DEVICE)
+            labels = get_label(batch).to(DEVICE)
             outputs = net(images)
             _, predicted = torch.max(outputs.data, 1)
             correct += (predicted == labels).sum().item()
@@ -171,8 +173,8 @@ def test(net, testloader):
 
 def eval_learning(net: Net, testloader: DataLoader):
     with torch.no_grad():
-        images = torch.cat([batch["img"].to(DEVICE) for batch in testloader], dim=0)
-        labels = torch.cat([batch["label"].to(DEVICE) for batch in testloader], dim=0)
+        images = torch.cat([get_data(batch).to(DEVICE) for batch in testloader], dim=0)
+        labels = torch.cat([get_label(batch).to(DEVICE) for batch in testloader], dim=0)
 
         outputs = net(images)
 
@@ -186,3 +188,11 @@ def eval_learning(net: Net, testloader: DataLoader):
     prec = precision_score(y_actual, y_pred, average="micro")
     f1 = f1_score(y_actual, y_pred, average="micro")
     return acc, rec, prec, f1
+
+
+def get_data(batch):
+    return batch["img"] if "img" in batch else batch[0]
+
+
+def get_label(batch):
+    return batch["label"] if "label" in batch else batch[1]

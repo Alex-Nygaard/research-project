@@ -10,35 +10,39 @@ class RunConfig:
     def __init__(
         self,
         run_id: int,
+        num_clients: int,
         option: str,
-        resources: str,
-        concentration: str,
-        variability: str,
-        distribution: str,
+        trace_file: str = "",
+        batch_size: str = "iid",
+        local_epochs: str = "iid",
+        data_volume: str = "iid",
+        data_labels: str = "iid",
     ):
         self.run_id = run_id
+        self.num_clients = num_clients
         self.option = option
-        self.resources = resources
-        self.concentration = concentration
-        self.variability = variability
-        self.distribution = distribution
-        self.code = f"{option[:3]}_R-{resources}_C-{concentration}_V-{variability}_D-{distribution}"
+        self.trace_file = trace_file
+        self.batch_size = batch_size
+        self.local_epochs = local_epochs
+        self.data_volume = data_volume
+        self.data_labels = data_labels
+        self.code = f"{option[:3]}_R-{batch_size}_C-{local_epochs}_V-{data_volume}_D-{data_labels}"
 
     def get_scenario(self):
         if self.option == "deployment":
             scenario = "deployment"
         elif "low" in [
-            self.resources,
-            self.concentration,
-            self.variability,
-            self.distribution,
+            self.batch_size,
+            self.local_epochs,
+            self.data_volume,
+            self.data_labels,
         ]:
             scenario = "low"
         elif "high" in [
-            self.resources,
-            self.concentration,
-            self.variability,
-            self.distribution,
+            self.batch_size,
+            self.local_epochs,
+            self.data_volume,
+            self.data_labels,
         ]:
             scenario = "high"
         else:
@@ -46,14 +50,14 @@ class RunConfig:
         return scenario
 
     def get_label(self):
-        if self.resources != "mid":
-            tag = f"Resources = {self.resources.upper()}"
-        elif self.concentration != "mid":
-            tag = f"Concentration = {self.concentration.upper()}"
-        elif self.variability != "mid":
-            tag = f"Variability = {self.variability.upper()}"
-        elif self.distribution != "mid":
-            tag = f"distribution = {self.distribution.upper()}"
+        if self.batch_size != "mid":
+            tag = f"Batch size = {self.batch_size.upper()}"
+        elif self.local_epochs != "mid":
+            tag = f"Concentration = {self.local_epochs.upper()}"
+        elif self.data_volume != "mid":
+            tag = f"Variability = {self.data_volume.upper()}"
+        elif self.data_labels != "mid":
+            tag = f"data_labels = {self.data_labels.upper()}"
         else:
             tag = "Base"
         return f"{self.option.capitalize()} - {tag}"
@@ -70,11 +74,13 @@ class RunConfig:
             data = json.load(file)
         return RunConfig(
             run_id=data.get("run_id", -1),
+            num_clients=data.get("num_clients", -1),
             option=data.get("option", "INVALID_OPT"),
-            resources=data.get("resources", "INVALID_RES"),
-            concentration=data.get("concentration", "INVALID_CONC"),
-            variability=data.get("variability", "INVALID_VAR"),
-            distribution=data.get("distribution", "INVALID_DIST"),
+            trace_file=data.get("trace_file", "INVALID_TRACE"),
+            batch_size=data.get("batch_size", "INVALID_BATCH"),
+            local_epochs=data.get("local_epochs", "INVALID_EPOCH"),
+            data_volume=data.get("data_volume", "INVALID_VOL"),
+            data_labels=data.get("data_labels", "INVALID_LAB"),
         )
 
     @staticmethod

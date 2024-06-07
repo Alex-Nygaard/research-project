@@ -13,8 +13,3 @@ def create_output_structure():
         with open(run_counter_path, "w") as file:
             file.write("0")
             file.flush()
-
-    clients_csv_path = os.path.join(LOG_DIR, "clients.csv")
-    with open(clients_csv_path, "w") as file:
-        file.write(",".join(FlowerClient.columns) + "\n")
-        file.flush()

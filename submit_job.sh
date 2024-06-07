@@ -1,8 +1,6 @@
 #!/bin/bash
 
 #SBATCH --job-name="sim"
-### #SBATCH --output=out.sim.%j.out
-### #SBATCH --error=err.sim.%j.err
 #SBATCH --partition=gpu-a100
 #SBATCH --time=02:00:00
 #SBATCH --ntasks=1
@@ -21,24 +19,26 @@ source "$(conda info --base)/etc/profile.d/conda.sh"
 mkdir -p "logs/run_$SLURM_JOB_ID"
 
 option="simulation"
-resources="mid"
-concentration="mid"
-variability="mid"
-distribution="mid"
+batch_size="iid"
+local_epochs="iid"
+data_volume="iid"
+data_labels="iid"
+num_clients=100
 
 for arg in "$@"; do
     case $arg in
         --option=*) option="${arg#*=}" ;;
-        --resources=*) resources="${arg#*=}" ;;
-        --concentration=*) concentration="${arg#*=}" ;;
-        --variability=*) variability="${arg#*=}" ;;
-        --distribution=*) distribution="${arg#*=}" ;;
+        --batch_size=*) batch_size="${arg#*=}" ;;
+        --local_epochs=*) local_epochs="${arg#*=}" ;;
+        --data_volume=*) data_volume="${arg#*=}" ;;
+        --data_labels=*) data_labels="${arg#*=}" ;;
+        --num_clients=*) num_clients="${arg#*=}" ;;
         *) echo "Unknown parameter passed: $arg"; exit 1 ;;
     esac
 done
 
-echo "Running main.py with option=$option, resources=$resources, concentration=$concentration, variability=$variability, distribution=$distribution"
+echo "Running main.py with option=$option, batch_size=$batch_size, local_epochs=$local_epochs, data_volume=$data_volume, data_labels=$data_labels, num_clients=$num_clients"
 
 conda activate new_env
-srun python main.py --option="$option" --resources="$resources" --concentration="$concentration" --variability="$variability" --distribution="$distribution" > "logs/run_$SLURM_JOB_ID/output.log" 2>&1  || echo "Exit with error code $? (suppressed)"
+srun python main.py --option="$option" --batch_size="$batch_size" --local_epochs="$local_epochs" --data_volume="$data_volume" --data_labels="$data_labels" --num_clients="$num_clients" > "logs/run_$SLURM_JOB_ID/output.log" 2>&1  || echo "Exit with error code $? (suppressed)"
 conda deactivate

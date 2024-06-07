@@ -22,6 +22,8 @@ fl.common.logger.configure(
 async def main(config: RunConfig):
     if config.option == "simulation":
         logger.info("Starting simulation...")
+        if config.trace_file.endswith("testing_clients.json"):
+            logger.warn("Using testing clients for simulation.")
         simulation_task = run_simulation(config)
         logger.info("Simulation task started.")
         await asyncio.gather(simulation_task)
@@ -29,9 +31,12 @@ async def main(config: RunConfig):
         logger.info("Starting deployment...")
 
         logger.info("Generating client config...")
-        FlowerClient.generate_deployment_clients(
-            config.num_clients, LOG_DIR, "clients.json"
-        )
+        output_dirs = [
+            os.path.join(LOG_DIR, "clients.json"),
+            os.path.join("client", "testing_clients.json"),
+        ]
+        FlowerClient.generate_deployment_clients(config.num_clients, output_dirs)
+        config.trace_file = output_dirs[0]
 
         server_task = asyncio.create_task(run_server(config))
         logger.info("Server task started. Waiting 10 seconds to start clients...")

@@ -1,21 +1,20 @@
 import json
-import math
 import os
-import csv
-from typing import List, Tuple, Optional
+from typing import Optional
+import random
 
-from datasets import Dataset
 from torch.utils.data import DataLoader
 from flwr.client import NumPyClient
 from datasets.utils.logging import disable_progress_bar
 
 from config.constants import DEVICE, LOG_DIR
 from client.network import Net, train, test, eval_learning
-from data.load_data import get_data_for_client, apply_transforms
 from data.noniid_load_dataset import load_datasets
-from client.attribute import Attribute
+from logger.logger import get_logger
 
 disable_progress_bar()
+
+log = get_logger("client.client")
 
 
 class FlowerClient(NumPyClient):
@@ -41,19 +40,23 @@ class FlowerClient(NumPyClient):
         self.cid = cid
         self.net = Net().to(DEVICE)
 
-        self.batch_size = batch_size
-        self.local_epochs = local_epochs
         self.train_loader = train_loader
         self.test_loader = test_loader
 
-        self.data_volume = len(train_loader.dataset) + len(test_loader.dataset)
+        self.attributes = self.Attributes(
+            cid=cid,
+            batch_size=batch_size,
+            local_epochs=local_epochs,
+            data_volume=data_volume,
+            data_labels=data_labels,
+        )
 
     def fit(self, parameters, config):
         self.net.set_parameters(parameters)
         self.net.train()
         current_round = config["current_round"]
 
-        train(self.net, self.train_loader, epochs=self.local_epochs)
+        train(self.net, self.train_loader, epochs=self.attributes.local_epochs)
         return self.net.get_parameters(config={}), len(self.train_loader.dataset), {}
 
     def evaluate(self, parameters, config):
@@ -86,61 +89,6 @@ class FlowerClient(NumPyClient):
         setattr(self, key, value)
 
     @classmethod
-    def of(
-        cls,
-        cid,
-        batch_size_dist: str = "iid",
-        local_epochs_dist: str = "iid",
-        data_volume_dist: str = "iid",
-        data_labels_dist: str = "iid",
-    ):
-        batch_size = (
-            32
-            if batch_size_dist == "iid"
-            else cls.batch_size_options[cid % len(cls.batch_size_options)]
-        )
-        local_epochs = (
-            5
-            if local_epochs_dist == "iid"
-            else cls.local_epoch_options[cid % len(cls.local_epoch_options)]
-        )
-
-        return FlowerClient(
-            cid=cid,
-            batch_size=batch_size,
-            local_epochs=local_epochs,
-        )
-
-    def write_to_csv(self, path, filename):
-        data = [str(self[col]) for col in FlowerClient.columns]
-        with open(os.path.join(path, filename), "a") as file:
-            file.write(",".join(data) + "\n")
-            file.flush()
-
-    @staticmethod
-    def write_many(clients, path, filename):
-        for client in clients:
-            client.write_to_csv(path, filename)
-
-    @classmethod
-    def read_from_csv(cls, path, filename):
-        full_path = os.path.join(path, filename)
-
-        clients = []
-
-        with open(full_path, mode="r", newline="") as file:
-            csv_reader = csv.reader(file)
-            next(csv_reader)  # skip header
-            for row in csv_reader:
-                kwargs = {
-                    col: Attribute.get(col, value)
-                    for col, value in zip(cls.columns, row)
-                }
-                clients.append(cls.of(**kwargs))
-
-        return clients
-
-    @classmethod
     def read_attributes_from_json(cls, full_path) -> tuple[
         list,
         list,
@@ -158,8 +106,7 @@ class FlowerClient(NumPyClient):
         return batch_sizes, local_epochs, data_volume, data_labels
 
     @classmethod
-    def write_attributes_to_json(cls, data: dict, path, filename):
-        full_path = os.path.join(path, filename)
+    def write_to_json(cls, data: dict, full_path):
         with open(full_path, mode="w") as file:
             json.dump(data, file, indent=4)
 
@@ -167,14 +114,13 @@ class FlowerClient(NumPyClient):
     def generate_deployment_clients(
         cls,
         num: int,
-        path: str,
-        filename: str,
+        output_paths: list[str],
     ):
         bs_opts = [16, 32, 64, 128]
         le_opts = [1, 3, 5, 7]
 
-        batch_sizes = [bs_opts[i % len(bs_opts)] for i in range(num)]
-        local_epochs = [le_opts[i % len(le_opts)] for i in range(num)]
+        batch_sizes = [random.choice(bs_opts) for _ in range(num)]
+        local_epochs = [random.choice(le_opts) for _ in range(num)]
 
         train_datasets, test_datasets, valid_set = load_datasets(
             {
@@ -186,23 +132,25 @@ class FlowerClient(NumPyClient):
             num_clients=num,
         )
 
-        clients = {}
+        client_attributes = {}
         for cid, train_dl, test_dl, batch_size, local_epoch in zip(
             range(num), train_datasets, test_datasets, batch_sizes, local_epochs
         ):
-            client = {
-                "cid": cid,
-                "batch_size": batch_size,
-                "local_epochs": local_epoch,
-                "data_volume": len(train_dl.dataset) + len(test_dl.dataset),
-                "data_labels": len(
+            client = FlowerClient(
+                cid=cid,
+                batch_size=batch_size,
+                local_epochs=local_epoch,
+                data_volume=len(train_dl.dataset) + len(test_dl.dataset),
+                data_labels=len(
                     set([ex[1] for ex in train_dl.dataset])
                     | set([ex[1] for ex in train_dl.dataset])
                 ),
-            }
-            clients[cid] = client
+            )
+            client_attributes[cid] = client.attributes.__dict__
 
-        cls.write_attributes_to_json(clients, path, filename)
+        for path in output_paths:
+            log.info(f"Writing client attributes to {path}...")
+            cls.write_to_json(client_attributes, path)
 
 
 def fit_config(server_round: int):
@@ -230,6 +178,11 @@ def get_client_fn(
             if trace_file is not None
             else os.path.join(LOG_DIR, "clients.json")
         )
+
+        assert (
+            len(batches) == len(epochs) == len(datapoints) == len(labels) == num_clients
+        ), "Number of clients does not match trace file."
+
         if option == "simulation":
             if batch_sizes == "iid":
                 batches = [32] * num_clients

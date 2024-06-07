@@ -28,11 +28,13 @@ if __name__ == "__main__":
     num_gpus = int(os.environ.get("SLURM_GPUS_PER_TASK", 0))
 
     logger.info(
-        "RUNNING SIMULATION with batch_size=%s,local_epochs=%s,data_volume=%s,data_labels=%s,num_cpus=%s,num_gpus=%s",
+        "RUNNING SIMULATION with batch_size=%s,local_epochs=%s,data_volume=%s,data_labels=%s,num_clients=%s,trace_file=%s,num_cpus=%s,num_gpus=%s",
         batch_size,
         local_epochs,
         data_volume,
         data_labels,
+        num_clients,
+        trace_file,
         num_cpus,
         num_gpus,
     )
@@ -46,8 +48,8 @@ if __name__ == "__main__":
             trace_file=trace_file,
             batch_sizes=batch_size,
             local_epochs=local_epochs,
-            num_datapoints=data_volume,
-            num_labels=data_labels,
+            data_volume=data_volume,
+            data_labels=data_labels,
         ),
         strategy=get_strategy(),
         ray_init_args={

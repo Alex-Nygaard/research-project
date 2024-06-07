@@ -38,7 +38,7 @@ def get_base_parser(description: str):
     )
 
     parser.add_argument(
-        "--num_clients", type=int, default=4, nargs="?", help="Number of clients."
+        "--num_clients", type=int, default=50, nargs="?", help="Number of clients."
     )
 
     parser.add_argument(

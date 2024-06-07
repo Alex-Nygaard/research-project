@@ -32,8 +32,8 @@ if __name__ == "__main__":
             option="deployment",
             batch_sizes=batch_size,
             local_epochs=local_epochs,
-            num_datapoints=data_volume,
-            num_labels=data_labels,
+            data_volume=data_volume,
+            data_labels=data_labels,
             deployment_id=cid,
         ),
     )

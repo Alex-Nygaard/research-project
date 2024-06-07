@@ -26,7 +26,7 @@ class RunConfig:
         self.local_epochs = local_epochs
         self.data_volume = data_volume
         self.data_labels = data_labels
-        self.code = f"{option[:3]}_R-{batch_size}_C-{local_epochs}_V-{data_volume}_D-{data_labels}"
+        self.code = f"{option[:3]}_B-{batch_size}_E-{local_epochs}_V-{data_volume}_L-{data_labels}"
 
     def get_scenario(self):
         if self.option == "deployment":

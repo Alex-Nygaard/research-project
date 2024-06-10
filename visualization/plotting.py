@@ -3,6 +3,7 @@ import os
 import scienceplots
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib import rc
 from visualization.data import Metric, RunData
 from logger.logger import get_logger
 
@@ -18,7 +19,9 @@ def plot_metrics(
     y_label="Value",
     save_dir: str = None,
 ):
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(505 / 72 / 1.5, 505 / 72 / 3))
+    rc("font", **{"family": "sans-serif", "sans-serif": ["Helvetica"]})
+    rc("text", usetex=True)
 
     for metric in metrics:
         plot_single_metric(metric)
@@ -26,7 +29,7 @@ def plot_metrics(
     plt.title(title)
     plt.xlabel(x_label)
     plt.ylabel(y_label)
-    plt.legend()
+    plt.legend(fontsize="6")
     plt.grid(True)
     if save_dir:
         logger.info(f"Saving figure to {save_dir}.")
@@ -57,24 +60,47 @@ def create():
     # simulation_variability = ["run_3740247", "run_3740248"]
 
     # 100 ROUNDS
-    deployment = ["run_3749632"]
-    simulation_base = ["run_3749633"]
+    # deployment = ["run_3749632"]
+    # simulation_base = ["run_3749633"]
+    #
+    # simulation_resources = ["run_3749634", "run_3749635"]
+    # simulation_variability = ["run_3749636", "run_3749637"]
+    # simulation_concentration = ["run_3749638", "run_3749639"]
 
-    simulation_resources = ["run_3749634", "run_3749635"]
-    simulation_variability = ["run_3749636", "run_3749637"]
-    simulation_concentration = ["run_3749638", "run_3749639"]
+    # run_combinations = {
+    #     "concentration": deployment + simulation_base + simulation_concentration,
+    #     "resources": deployment + simulation_base + simulation_resources,
+    #     "variability": deployment + simulation_base + simulation_variability,
+    # }
+    # run_combinations = {
+    #     key: RunData.build_many(runs) for key, runs in run_combinations.items()
+    # }
 
     run_combinations = {
-        "concentration": deployment + simulation_base + simulation_concentration,
-        "resources": deployment + simulation_base + simulation_resources,
-        "variability": deployment + simulation_base + simulation_variability,
+        # "blind": ["run_100", "run_102"],
+        # "batch_size": ["run_100", "run_103"],
+        # "local_epochs": ["run_100", "run_104"],
+        # "data_volume": ["run_100", "run_105"],
+        # "data_labels": ["run_100", "run_106"],
+        # "real": ["run_100", "run_107"],
+        "all": [
+            "run_100",
+            "run_102",
+            "run_103",
+            "run_104",
+            "run_105",
+            "run_106",
+            "run_107",
+        ],
     }
+
     run_combinations = {
-        key: RunData.build_many(runs) for key, runs in run_combinations.items()
+        key: RunData.build_many(runs, base_path="logs")
+        for key, runs in run_combinations.items()
     }
 
     all_csv_files = []
-    output_path = "for-report/100"
+    output_path = "for-report/20"
     os.makedirs(output_path, exist_ok=True)
 
     for category, runs in run_combinations.items():
@@ -84,7 +110,7 @@ def create():
                 title=f"{key.capitalize()} per Round",
                 x_label="Round number",
                 y_label=key.capitalize(),
-                save_dir=os.path.join(output_path, f"{category}-{key}.png"),
+                save_dir=os.path.join(output_path, f"{category}-{key}.pdf"),
             )
 
         filename = f"{category}-results.csv"

@@ -14,6 +14,7 @@ from data.noniid_load_dataset import (
     load_datasets,
     get_dirichlet_idxs,
     get_replicate_idxs,
+    load_one_client,
 )
 from logger.logger import get_logger
 
@@ -94,7 +95,20 @@ class FlowerClient(NumPyClient):
         setattr(self, key, value)
 
     @classmethod
-    def read_attributes_from_json(cls, full_path) -> tuple[
+    def read_one(cls, full_path: str, idx: int):
+        with open(full_path, mode="r") as file:
+            data = json.load(file)
+        key = str(idx)
+        return (
+            data[key]["idxs"],
+            data[key]["batch_size"],
+            data[key]["local_epoch"],
+            data[key]["data_volume"],
+            data[key]["data_labels"],
+        )
+
+    @classmethod
+    def read_many(cls, full_path) -> tuple[
         list,
         list,
         list,
@@ -106,26 +120,22 @@ class FlowerClient(NumPyClient):
 
         idxs = [data[key]["idxs"] for key in data.keys()]
         batch_sizes = [data[key]["batch_size"] for key in data.keys()]
-        local_epochs = [data[key]["local_epochs"] for key in data.keys()]
-        data_volume = [data[key]["data_volume"] for key in data.keys()]
+        local_epochs = [data[key]["local_epoch"] for key in data.keys()]
+        data_volumes = [data[key]["data_volume"] for key in data.keys()]
         data_labels = [data[key]["data_labels"] for key in data.keys()]
 
-        return idxs, batch_sizes, local_epochs, data_volume, data_labels
+        return idxs, batch_sizes, local_epochs, data_volumes, data_labels
 
     @classmethod
     def write_to_json(cls, data: dict, full_path):
         with open(full_path, mode="w") as file:
             json.dump(data, file, indent=4)
 
-    """
-    num_clients: int,
-    option: str,
-    trace_file: str = "",
-    batch_size: str = "iid",
-    local_epochs: str = "iid",
-    data_volume: str = "iid",
-    data_labels: str = "iid",
-    """
+    @classmethod
+    def read_from_json(cls, full_path):
+        with open(full_path, mode="r") as file:
+            data = json.load(file)
+        return data
 
     @classmethod
     def generate_simulation_clients(
@@ -137,13 +147,11 @@ class FlowerClient(NumPyClient):
         local_epochs: str = "iid",
         data_volume: str = "iid",
         data_labels: str = "iid",
-    ):
-        unused_idxs, batches, epochs, datapoints, labels = (
-            FlowerClient.read_attributes_from_json(
-                trace_file
-                if trace_file is not None
-                else os.path.join("clients", "testing_clients.json")
-            )
+    ) -> str:
+        unused_idxs, batches, epochs, datapoints, labels = FlowerClient.read_many(
+            trace_file
+            if trace_file is not None
+            else os.path.join("clients", "testing_clients.json")
         )
 
         if batch_size == "iid":
@@ -189,11 +197,14 @@ class FlowerClient(NumPyClient):
         with open(output_path, mode="w") as file:
             json.dump(client_attributes, file, indent=4)
 
+        return output_path
+
     @classmethod
     def generate_deployment_clients(
         cls,
         num_clients: int,
         output_paths: list[str],
+        seed: int = 42,
     ):
         bs_opts = [16, 32, 64, 128]
         le_opts = [1, 3, 5, 7]
@@ -201,7 +212,9 @@ class FlowerClient(NumPyClient):
         batch_sizes = [random.choice(bs_opts) for _ in range(num_clients)]
         local_epochs = [random.choice(le_opts) for _ in range(num_clients)]
 
-        client_idxs, data_volumes, data_labels = get_dirichlet_idxs(num_clients)
+        client_idxs, data_volumes, data_labels = get_dirichlet_idxs(
+            num_clients, seed=seed, download=True
+        )
 
         client_attributes = {}
         for cid, idxs, batch_size, local_epoch, volume, label in zip(
@@ -246,54 +259,22 @@ def get_client_fn(
     def client_fn(simulation_id: str):
         cid = int(deployment_id) if deployment_id is not None else int(simulation_id)
 
-        batches, epochs, datapoints, labels = FlowerClient.read_attributes_from_json(
-            trace_file
-            if trace_file is not None
-            else os.path.join(LOG_DIR, "clients.json")
+        idxs, batch, epoch, datapoint, label = FlowerClient.read_one(
+            (
+                trace_file
+                if trace_file is not None
+                else os.path.join(LOG_DIR, "clients.json")
+            ),
+            cid,
         )
 
-        assert (
-            len(batches) == len(epochs) == len(datapoints) == len(labels) == num_clients
-        ), "Number of clients does not match trace file."
-
-        if option == "simulation":
-            if batch_sizes == "iid":
-                batches = [32] * num_clients
-            if local_epochs == "iid":
-                epochs = [4] * num_clients
-            if data_volume == "iid":
-                datapoints = [50_000 // num_clients] * num_clients
-            if data_labels == "iid":
-                labels = [10] * num_clients
-
-            train_datasets, test_datasets, valid_set = load_datasets(
-                {
-                    "partitioning": "replicate",
-                    "alpha": 0.5,
-                    "batch_sizes": batches,
-                    "datapoints_per_client": datapoints,
-                    "labels_per_client": labels,
-                    "name": "cifar10",
-                },
-                num_clients=num_clients,
-            )
-        else:
-            train_datasets, test_datasets, valid_set = load_datasets(
-                {
-                    "partitioning": "dirichlet",
-                    "alpha": 0.5,
-                    "batch_sizes": batches,
-                    "name": "cifar10",
-                },
-                num_clients=num_clients,
-            )
-
+        train_dl, test_dl = load_one_client(idxs, batch, download=False)
         client = FlowerClient(
             cid,
-            batch_size=batches[cid],
-            local_epochs=epochs[cid],
-            train_loader=train_datasets[cid],
-            test_loader=test_datasets[cid],
+            batch_size=batch,
+            local_epochs=epoch,
+            train_loader=train_dl,
+            test_loader=test_dl,
         )
 
         return client.to_client()

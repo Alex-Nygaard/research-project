@@ -45,7 +45,7 @@ if __name__ == "__main__":
         client_fn=get_client_fn(
             num_clients=num_clients,
             option="simulation",
-            trace_file=trace_file,
+            # trace_file=trace_file,
             batch_sizes=batch_size,
             local_epochs=local_epochs,
             data_volume=data_volume,

@@ -29,37 +29,54 @@ class RunConfig:
         self.code = f"{option[:3]}_B-{batch_size}_E-{local_epochs}_V-{data_volume}_L-{data_labels}"
 
     def get_scenario(self):
+        combined = [
+            self.batch_size,
+            self.local_epochs,
+            self.data_volume,
+            self.data_labels,
+        ]
         if self.option == "deployment":
             scenario = "deployment"
-        elif "low" in [
-            self.batch_size,
-            self.local_epochs,
-            self.data_volume,
-            self.data_labels,
-        ]:
-            scenario = "low"
-        elif "high" in [
-            self.batch_size,
-            self.local_epochs,
-            self.data_volume,
-            self.data_labels,
-        ]:
-            scenario = "high"
+        elif all(["iid" == val for val in combined]):
+            scenario = "blind"
+        elif all(["noniid" == val for val in combined]):
+            scenario = "real"
+        elif self.batch_size == "noniid":
+            scenario = "batch_niid"
+        elif self.local_epochs == "noniid":
+            scenario = "epoch_niid"
+        elif self.data_volume == "noniid":
+            scenario = "volume_niid"
+        elif self.data_labels == "noniid":
+            scenario = "label_niid"
         else:
-            scenario = "mid"
+            scenario = "invalid"
         return scenario
 
     def get_label(self):
-        if self.batch_size != "mid":
-            tag = f"Batch size = {self.batch_size.upper()}"
-        elif self.local_epochs != "mid":
-            tag = f"Concentration = {self.local_epochs.upper()}"
-        elif self.data_volume != "mid":
-            tag = f"Variability = {self.data_volume.upper()}"
-        elif self.data_labels != "mid":
-            tag = f"data_labels = {self.data_labels.upper()}"
+        combined = [
+            self.batch_size,
+            self.local_epochs,
+            self.data_volume,
+            self.data_labels,
+        ]
+        if self.option == "deployment":
+            tag = "Real"
+        elif all(["iid" == val for val in combined]):
+            tag = "Blind"
+        elif all(["noniid" == val for val in combined]):
+            tag = "Real"
+        elif self.batch_size == "noniid":
+            tag = "Batch size Non-IID"
+        elif self.local_epochs == "noniid":
+            tag = "Local Epochs Non-IID"
+        elif self.data_volume == "noniid":
+            tag = "Data volume Non-IID"
+        elif self.data_labels == "noniid":
+            tag = "Data labels Non-IID"
         else:
-            tag = "Base"
+            tag = "Invalid"
+
         return f"{self.option.capitalize()} - {tag}"
 
     def write_to_json(self, path: str, filename: str):

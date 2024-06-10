@@ -13,6 +13,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     cid = args.cid
     num_clients = args.num_clients
+    trace_file = args.trace_file
     batch_size = args.batch_size
     local_epochs = args.local_epochs
     data_volume = args.data_volume
@@ -30,6 +31,7 @@ if __name__ == "__main__":
         client_fn=get_client_fn(
             num_clients=num_clients,
             option="deployment",
+            trace_file=trace_file,
             batch_sizes=batch_size,
             local_epochs=local_epochs,
             data_volume=data_volume,

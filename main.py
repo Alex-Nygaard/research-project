@@ -22,8 +22,17 @@ fl.common.logger.configure(
 async def main(config: RunConfig):
     if config.option == "simulation":
         logger.info("Starting simulation...")
-        if config.trace_file.endswith("testing_clients.json"):
-            logger.warn("Using testing clients for simulation.")
+        logger.info("Generating client config...")
+        trace_file = FlowerClient.generate_simulation_clients(
+            num_clients=config.num_clients,
+            output_path=os.path.join(LOG_DIR, "clients.json"),
+            trace_file=config.trace_file,
+            batch_size=config.batch_size,
+            local_epochs=config.local_epochs,
+            data_volume=config.data_volume,
+            data_labels=config.data_labels,
+        )
+        config.trace_file = trace_file
         simulation_task = run_simulation(config)
         logger.info("Simulation task started.")
         await asyncio.gather(simulation_task)
@@ -37,6 +46,7 @@ async def main(config: RunConfig):
         ]
         FlowerClient.generate_deployment_clients(config.num_clients, output_dirs)
         config.trace_file = output_dirs[0]
+        logger.info(f"RunConfig trace file set to {config.trace_file}.")
 
         server_task = asyncio.create_task(run_server(config))
         logger.info("Server task started. Waiting 10 seconds to start clients...")
@@ -62,6 +72,7 @@ async def run_client(cid: int, config: RunConfig):
         "deploy_client.py",
         f"--cid={cid}",
         f"--num_clients={config.num_clients}",
+        f"--trace_file={config.trace_file}",
         f"--batch_size={config.batch_size}",
         f"--local_epochs={config.local_epochs}",
         f"--data_volume={config.data_volume}",

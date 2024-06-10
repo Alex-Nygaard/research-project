@@ -15,7 +15,7 @@ from visualization.utils import (
 
 
 class Style:
-    def __init__(self, color="b", marker="o", linestyle="-"):
+    def __init__(self, color="b", marker="", linestyle="-"):
         self.color = color
         self.marker = marker
         self.linestyle = linestyle
@@ -30,16 +30,22 @@ class Style:
 class Metric:
     styles = {
         "accuracy": {
-            "low": Style(color="#00D2FC", marker="o"),
-            "mid": Style(color="#009EFA", marker="s"),
-            "high": Style(color="#845EC2", marker="x"),
-            "deployment": Style(color="#D63423", marker="^"),
+            "batch_niid": Style(color="#577590", marker=""),
+            "epoch_niid": Style(color="#31E981", marker=""),
+            "volume_niid": Style(color="#F3722C", marker=""),
+            "label_niid": Style(color="#F9C74F", marker=""),
+            "blind": Style(color="#17BEBB", marker=""),
+            "real": Style(color="#8A1C7C", marker=""),
+            "deployment": Style(color="#EF3E36", marker=""),
         },
         "loss": {
-            "low": Style(color="#D9EDBF", marker="o"),
-            "mid": Style(color="#90D26D", marker="s"),
-            "high": Style(color="#2C7865", marker="x"),
-            "deployment": Style(color="#FF9800", marker="^"),
+            "batch_niid": Style(color="#577590", marker=""),
+            "epoch_niid": Style(color="#31E981", marker=""),
+            "volume_niid": Style(color="#F3722C", marker=""),
+            "label_niid": Style(color="#F9C74F", marker=""),
+            "blind": Style(color="#17BEBB", marker=""),
+            "real": Style(color="#8A1C7C", marker=""),
+            "deployment": Style(color="#EF3E36", marker=""),
         },
     }
 
@@ -159,7 +165,7 @@ class RunData:
         run_id: str,
         history: History,
         run_config: RunConfig,
-        clients: list[FlowerClient],
+        clients: list[dict],
     ):
         self.run_id = run_id
         self.history = history
@@ -250,7 +256,7 @@ class RunData:
         log_dir = os.path.join(base_path, run_id)
         history = History.read(os.path.join(log_dir, "history-data.json"))
         run_config = RunConfig.read_from_json(log_dir, "run_config.json")
-        clients = FlowerClient.read_from_csv(log_dir, "clients.csv")
+        clients = FlowerClient.read_from_json(os.path.join(log_dir, "clients.json"))
         return RunData(run_id, history, run_config, clients)
 
     @classmethod

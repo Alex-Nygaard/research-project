@@ -1,5 +1,6 @@
 """Download data and partition data with different partitioning strategies."""
 
+import os
 from typing import List, Tuple
 
 import numpy as np
@@ -332,7 +333,9 @@ def get_custom_info(
     )
     data_volume = [len(idxs) for idxs in client_idxs]
     data_labels = [
-        len(set([ex[1] for ex in trainset[idxs]]) | set([ex[1] for ex in testset]))
+        len(
+            set([ex[1] for ex in [trainset[idx] for idx in idxs]])
+        )  # | set([ex[1] for ex in testset]))
         for idxs in client_idxs
     ]
     return client_idxs, data_volume, data_labels
@@ -344,7 +347,7 @@ def get_data_with_idxs(idxs: list[int], dataset_name="cifar10", download=False):
 
 
 def get_dirichlet_info(
-    num_clients, alpha, seed=42, dataset_name="cifar10", download=False
+    num_clients, alpha, seed=42, dataset_name="cifar10", download=True
 ):
     trainset, testset = _download_data(dataset_name, download=download)
     min_required_samples_per_client = 10
@@ -381,7 +384,10 @@ def get_dirichlet_info(
 
     data_volume = [len(idx_j) for idx_j in idx_clients]
     data_labels = [
-        len(set([ex[1] for ex in trainset[idxs]]) | set([ex[1] for ex in testset]))
+        len(
+            set([ex[1] for ex in [trainset[idx] for idx in idxs]])
+            # | set([ex[1] for ex in testset])
+        )
         for idxs in idx_clients
     ]
     return idx_clients, data_volume, data_labels
@@ -454,6 +460,13 @@ def _download_data(dataset_name="emnist", download=True) -> Tuple[Dataset, Datas
         The training dataset, the test dataset.
     """
     trainset, testset = None, None
+
+    root = "data"
+    slurm_job_id = os.environ.get("SLURM_JOB_ID", None)
+    if slurm_job_id is not None:
+        root = f"/tmp/{slurm_job_id}/data"
+        os.makedirs(root, exist_ok=True)
+
     if dataset_name == "cifar10":
         transform_train = transforms.Compose(
             [
@@ -477,13 +490,13 @@ def _download_data(dataset_name="emnist", download=True) -> Tuple[Dataset, Datas
             ]
         )
         trainset = CIFAR10(
-            root="data",
+            root=root,
             train=True,
             download=download,
             transform=transform_train,
         )
         testset = CIFAR10(
-            root="data",
+            root=root,
             train=False,
             download=download,
             transform=transform_test,
@@ -500,13 +513,13 @@ def _download_data(dataset_name="emnist", download=True) -> Tuple[Dataset, Datas
             ]
         )
         trainset = MNIST(
-            root="data",
+            root=root,
             train=True,
             download=download,
             transform=transform_train,
         )
         testset = MNIST(
-            root="data",
+            root=root,
             train=False,
             download=download,
             transform=transform_test,
@@ -523,13 +536,13 @@ def _download_data(dataset_name="emnist", download=True) -> Tuple[Dataset, Datas
             ]
         )
         trainset = FashionMNIST(
-            root="data",
+            root=root,
             train=True,
             download=download,
             transform=transform_train,
         )
         testset = FashionMNIST(
-            root="data",
+            root=root,
             train=False,
             download=download,
             transform=transform_test,

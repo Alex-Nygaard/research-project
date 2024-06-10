@@ -8,8 +8,8 @@ from datasets.utils.logging import disable_progress_bar
 
 from client.network import Net, test, eval_learning
 from client.client import fit_config
-from config.constants import DEVICE
-from data.load_data import centralized_test_set
+from config.constants import DEVICE, DATASET
+from data.noniid_dataset_preparation import _download_data
 from logger.logger import get_logger
 
 disable_progress_bar()
@@ -35,7 +35,9 @@ def evaluate_fn(
     model.set_parameters(parameters)
     model.eval()
 
-    test_loader = DataLoader(centralized_test_set, batch_size=32)
+    _, testset = _download_data(DATASET, download=False)
+
+    test_loader = DataLoader(testset, batch_size=32)
     loss, accuracy = test(model, test_loader)
 
     acc, rec, prec, f1 = eval_learning(model, test_loader)

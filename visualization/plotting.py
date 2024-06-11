@@ -83,14 +83,23 @@ def create():
         # "data_volume": ["run_100", "run_105"],
         # "data_labels": ["run_100", "run_106"],
         # "real": ["run_100", "run_107"],
-        "all": [
-            "run_100",
-            "run_102",
-            "run_103",
-            "run_104",
-            "run_105",
-            "run_106",
-            "run_107",
+        # "all": [
+        #     "run_100",
+        #     "run_102",
+        #     "run_103",
+        #     "run_104",
+        #     "run_105",
+        #     "run_106",
+        #     "run_107",
+        # ],
+        "all-20-100": [
+            "run_120",
+            "run_121",
+            "run_122",
+            "run_123",
+            "run_124",
+            "run_125",
+            "run_126",
         ],
     }
 
@@ -134,14 +143,21 @@ def combine_csv_files(csv_files: list[str], output_path: str, filename: str):
         raise ValueError("No DataFrames to concatenate.")
 
     custom_order = [
-        "dep_R-mid_C-mid_V-mid_Q-mid",
-        "sim_R-mid_C-mid_V-mid_Q-mid",
-        "sim_R-low_C-mid_V-mid_Q-mid",
-        "sim_R-high_C-mid_V-mid_Q-mid",
-        "sim_R-mid_C-low_V-mid_Q-mid",
-        "sim_R-mid_C-high_V-mid_Q-mid",
-        "sim_R-mid_C-mid_V-low_Q-mid",
-        "sim_R-mid_C-mid_V-high_Q-mid",
+        "dep_B-noniid_E-noniid_V-noniid_L-noniid",
+        "sim_B-noniid_E-noniid_V-noniid_L-noniid",
+        "sim_B-noniid_E-iid_V-iid_L-iid",
+        "sim_B-iid_E-noniid_V-iid_L-iid",
+        "sim_B-iid_E-iid_V-noniid_L-iid",
+        "sim_B-iid_E-iid_V-iid_L-noniid",
+        "sim_B-iid_E-iid_V-iid_L-iid",
+        # "dep_R-mid_C-mid_V-mid_Q-mid",
+        # "sim_R-mid_C-mid_V-mid_Q-mid",
+        # "sim_R-low_C-mid_V-mid_Q-mid",
+        # "sim_R-high_C-mid_V-mid_Q-mid",
+        # "sim_R-mid_C-low_V-mid_Q-mid",
+        # "sim_R-mid_C-high_V-mid_Q-mid",
+        # "sim_R-mid_C-mid_V-low_Q-mid",
+        # "sim_R-mid_C-mid_V-high_Q-mid",
     ]
 
     combined_df = pd.concat(dfs, ignore_index=True)

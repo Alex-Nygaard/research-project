@@ -204,6 +204,7 @@ class FlowerClient(NumPyClient):
         cls,
         num_clients: int,
         output_paths: list[str],
+        alpha: float = 0.5,
         seed: int = 42,
     ):
         bs_opts = [16, 32, 64, 128]
@@ -213,7 +214,7 @@ class FlowerClient(NumPyClient):
         local_epochs = [random.choice(le_opts) for _ in range(num_clients)]
 
         client_idxs, data_volumes, data_labels = get_dirichlet_idxs(
-            num_clients, seed=seed, download=True
+            num_clients, alpha=alpha, seed=seed, download=True
         )
 
         client_attributes = {}

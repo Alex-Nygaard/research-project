@@ -224,7 +224,6 @@ class RunData:
                             loss_conv_90 = i
                         if loss_conv_80 != -1 and loss_conv_90 != -1:
                             break
-
                 data = [
                     run.run_config.code,
                     max_acc,
@@ -250,6 +249,42 @@ class RunData:
                 ]
                 file.write(",".join([str(e) for e in data]) + "\n")
             file.flush()
+
+        mses = []
+        labels = []
+        for run in runs:
+            mses.append(run.get_metric("loss").y)
+            labels.append(run.run_config.code)
+        num_arrays = len(mses)
+        mse_matrix = np.zeros((num_arrays, num_arrays))
+        for i in range(num_arrays):
+            for j in range(num_arrays):
+                mse_matrix[i, j] = calculate_mse(mses[i], mses[j])
+        plt.figure(figsize=(8, 6))
+        plt.imshow(
+            mse_matrix,
+            cmap="viridis",
+            interpolation="nearest",
+            # xticklabels=labels,
+            # yticklabels=labels,
+        )
+        plt.colorbar(label="MSE")
+        plt.title("MSE Heatmap")
+        plt.xlabel("Array Index")
+        plt.ylabel("Array Index")
+
+        for i in range(num_arrays):
+            for j in range(num_arrays):
+                plt.text(
+                    j,
+                    i,
+                    f"{mse_matrix[i, j]:.2f}",
+                    ha="center",
+                    va="center",
+                    color="white",
+                )
+
+        plt.savefig(os.path.join(path, "mse.pdf"))
 
     @staticmethod
     def build(run_id: str, base_path: str = "from-delftblue/logs"):

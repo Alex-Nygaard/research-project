@@ -24,10 +24,14 @@ def load_datasets_with_idxs(name: str, train: bool = True):
 
 
 def get_dirichlet_idxs(
-    num_clients: int, val_ratio: float = 0.1, seed: int = 42, download: bool = True
+    num_clients: int,
+    alpha: float = 0.5,
+    val_ratio: float = 0.1,
+    seed: int = 42,
+    download: bool = True,
 ):
     idxs, data_volume, data_labels = get_dirichlet_info(
-        num_clients, alpha=0.5, seed=seed, download=download
+        num_clients, alpha=alpha, seed=seed, download=download
     )
 
     return idxs, data_volume, data_labels

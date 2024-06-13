@@ -203,7 +203,7 @@ class FlowerClient(NumPyClient):
     def generate_deployment_clients(
         cls,
         num_clients: int,
-        output_paths: list[str],
+        output_path: str,
         alpha: float = 0.5,
         seed: int = 42,
     ):
@@ -235,9 +235,11 @@ class FlowerClient(NumPyClient):
                 "data_labels": label,
             }
 
-        for path in output_paths:
-            log.info(f"Writing client attributes to {path}...")
-            cls.write_to_json(client_attributes, path)
+        # log.info(f"Writing client attributes to {output_path}...")
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        cls.write_to_json(client_attributes, output_path)
+
+        return output_path
 
 
 def fit_config(server_round: int):
@@ -250,7 +252,7 @@ def fit_config(server_round: int):
 def get_client_fn(
     num_clients: int,
     option: str = "simulation",
-    trace_file: str = None,
+    client_config_file: str = None,
     batch_sizes: str = "iid",
     local_epochs: str = "iid",
     data_volume: str = "iid",
@@ -262,8 +264,8 @@ def get_client_fn(
 
         idxs, batch, epoch, datapoint, label = FlowerClient.read_one(
             (
-                trace_file
-                if trace_file is not None
+                client_config_file
+                if client_config_file is not None
                 else os.path.join(LOG_DIR, "clients.json")
             ),
             cid,

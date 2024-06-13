@@ -17,7 +17,8 @@ if __name__ == "__main__":
     local_epochs = args.local_epochs
     data_volume = args.data_volume
     data_labels = args.data_labels
-    trace_file = args.trace_file
+    # trace_file = args.trace_file
+    client_config_file = args.client_config_file
 
     logger = get_logger("simulation.run")
     fl.common.logger.configure(
@@ -28,13 +29,14 @@ if __name__ == "__main__":
     num_gpus = int(os.environ.get("SLURM_GPUS_PER_TASK", 0))
 
     logger.info(
-        "RUNNING SIMULATION with batch_size=%s,local_epochs=%s,data_volume=%s,data_labels=%s,num_clients=%s,trace_file=%s,num_cpus=%s,num_gpus=%s",
+        "RUNNING SIMULATION with batch_size=%s,local_epochs=%s,data_volume=%s,data_labels=%s,num_clients=%s,client_config_file=%s,num_cpus=%s,num_gpus=%s",
         batch_size,
         local_epochs,
         data_volume,
         data_labels,
         num_clients,
-        trace_file,
+        # trace_file,
+        client_config_file,
         num_cpus,
         num_gpus,
     )
@@ -46,6 +48,7 @@ if __name__ == "__main__":
             num_clients=num_clients,
             option="simulation",
             # trace_file=trace_file,
+            client_config_file=client_config_file,
             batch_sizes=batch_size,
             local_epochs=local_epochs,
             data_volume=data_volume,

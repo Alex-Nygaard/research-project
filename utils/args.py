@@ -44,9 +44,17 @@ def get_base_parser(description: str):
     parser.add_argument(
         "--trace_file",
         type=str,
-        default="client/testing_clients.json",
+        default="",
         nargs="?",
         help="Path to the trace file.",
+    )
+
+    parser.add_argument(
+        "--client_config_file",
+        type=str,
+        default="",
+        nargs="?",
+        help="Path to the client config file.",
     )
 
     parser.add_argument(

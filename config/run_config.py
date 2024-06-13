@@ -13,6 +13,7 @@ class RunConfig:
         num_clients: int,
         option: str,
         trace_file: str = "",
+        client_config_file: str = "",
         batch_size: str = "iid",
         local_epochs: str = "iid",
         data_volume: str = "iid",
@@ -22,6 +23,7 @@ class RunConfig:
         self.num_clients = num_clients
         self.option = option
         self.trace_file = trace_file
+        self.client_config_file = client_config_file
         self.batch_size = batch_size
         self.local_epochs = local_epochs
         self.data_volume = data_volume
@@ -94,6 +96,7 @@ class RunConfig:
             num_clients=data.get("num_clients", -1),
             option=data.get("option", "INVALID_OPT"),
             trace_file=data.get("trace_file", "INVALID_TRACE"),
+            client_config_file=data.get("client_config_file", "INVALID_CLI_CONF"),
             batch_size=data.get("batch_size", "INVALID_BATCH"),
             local_epochs=data.get("local_epochs", "INVALID_EPOCH"),
             data_volume=data.get("data_volume", "INVALID_VOL"),

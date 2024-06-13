@@ -5,8 +5,9 @@ import flwr as fl
 
 from client.client import FlowerClient
 from config.run_config import RunConfig
-from config.constants import LOG_DIR, RUN_ID
+from config.constants import LOG_DIR, RUN_ID, DATASET
 from config.structure import create_output_structure
+from data.noniid_dataset_preparation import _download_data
 from utils.args import get_base_parser
 from utils.run_counter import increment_run_counter
 from logger.logger import get_logger
@@ -23,7 +24,7 @@ async def main(config: RunConfig):
     if config.option == "simulation":
         logger.info("Starting simulation...")
         logger.info("Generating client config...")
-        trace_file = FlowerClient.generate_simulation_clients(
+        client_config_file = FlowerClient.generate_simulation_clients(
             num_clients=config.num_clients,
             output_path=os.path.join(LOG_DIR, "clients.json"),
             trace_file=config.trace_file,
@@ -32,21 +33,27 @@ async def main(config: RunConfig):
             data_volume=config.data_volume,
             data_labels=config.data_labels,
         )
-        config.trace_file = trace_file
+        logger.info(f"Client config generated, saved to {client_config_file}.")
+        config.client_config_file = client_config_file
         simulation_task = run_simulation(config)
         logger.info("Simulation task started.")
         await asyncio.gather(simulation_task)
     elif config.option == "deployment":
         logger.info("Starting deployment...")
 
-        logger.info("Generating client config...")
-        output_dirs = [
-            os.path.join(LOG_DIR, "clients.json"),
-            os.path.join("client", "testing_clients.json"),
-        ]
-        FlowerClient.generate_deployment_clients(config.num_clients, output_dirs)
-        config.trace_file = output_dirs[0]
-        logger.info(f"RunConfig trace file set to {config.trace_file}.")
+        if config.trace_file == "":
+            logger.info("Generating client config...")
+
+            client_config_file = FlowerClient.generate_deployment_clients(
+                config.num_clients, output_path=os.path.join(LOG_DIR, "clients.json")
+            )
+            logger.info(f"Client config generated, saved to {client_config_file}.")
+            config.client_config_file = client_config_file
+        else:
+            logger.info("Tracefile given, setting client config to it.")
+            config.client_config_file = config.trace_file
+            logger.info(f"Downloading dataset '{DATASET}'...")
+            _download_data(DATASET, download=True)
 
         server_task = asyncio.create_task(run_server(config))
         logger.info("Server task started. Waiting 10 seconds to start clients...")
@@ -66,13 +73,13 @@ async def main(config: RunConfig):
 
 
 async def run_client(cid: int, config: RunConfig):
-    # logger.info("Starting client %s.", cid)
     cmd = [
         "python",
         "deploy_client.py",
         f"--cid={cid}",
         f"--num_clients={config.num_clients}",
         f"--trace_file={config.trace_file}",
+        f"--client_config_file={config.client_config_file}",
         f"--batch_size={config.batch_size}",
         f"--local_epochs={config.local_epochs}",
         f"--data_volume={config.data_volume}",
@@ -103,6 +110,7 @@ async def run_simulation(config: RunConfig):
         "run_simulation.py",
         f"--num_clients={config.num_clients}",
         f"--trace_file={config.trace_file}",
+        f"--client_config_file={config.client_config_file}",
         f"--batch_size={config.batch_size}",
         f"--local_epochs={config.local_epochs}",
         f"--data_volume={config.data_volume}",
@@ -130,6 +138,7 @@ if __name__ == "__main__":
     num_clients = args.num_clients
     option = args.option
     trace_file = args.trace_file
+    # client_config_file = args.client_config_file
     batch_size = args.batch_size
     local_epochs = args.local_epochs
     data_volume = args.data_volume
@@ -140,6 +149,7 @@ if __name__ == "__main__":
         num_clients=num_clients,
         option=option,
         trace_file=trace_file,
+        # client_config_file=client_config_file,
         batch_size=batch_size,
         local_epochs=local_epochs,
         data_volume=data_volume,

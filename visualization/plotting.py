@@ -1,4 +1,5 @@
 import os
+import itertools
 
 import scienceplots
 import pandas as pd
@@ -6,6 +7,14 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 from visualization.data import Metric, RunData
 from logger.logger import get_logger
+import numpy as np
+
+from visualization.utils import (
+    calculate_mae,
+    calculate_mse,
+    calculate_dtw,
+    calculate_pearson_correlation,
+)
 
 plt.style.use(["science", "ieee"])
 
@@ -127,8 +136,51 @@ def create():
         RunData.many_to_csv(runs, output_path, filename)
         logger.info(f"Saved {filename} to {output_path}.")
         all_csv_files.append(os.path.join(output_path, filename))
+        create_correlelogram(
+            runs, os.path.join(output_path, f"{category}-correlogram.pdf")
+        )
 
     combine_csv_files(all_csv_files, output_path, "all-results.csv")
+
+
+def create_correlelogram(runs: list["RunData"], output_path: str):
+    accuracies = [100 * np.array(run.get_metric("accuracy").y) for run in runs]
+    num_arrays = len(runs)
+    matrix = np.zeros((num_arrays, num_arrays))
+
+    for i, j in itertools.combinations(range(num_arrays), 2):
+        mse = calculate_mse(accuracies[i], accuracies[j])
+        matrix[i, j] = mse
+        matrix[j, i] = mse
+
+    fig, ax = plt.subplots()
+    cax = ax.matshow(matrix, cmap="gist_gray", interpolation="none")
+    fig.colorbar(cax)
+
+    avg = np.average(matrix)
+
+    for (i, j), z in np.ndenumerate(matrix):
+        ax.text(
+            j,
+            i,
+            "{:0.1f}".format(z),
+            ha="center",
+            va="center",
+            color="white" if z < avg / 1.5 else "black",
+        )
+
+    # Set ticks and labels
+    ax.set_xticks(range(num_arrays))
+    ax.set_yticks(range(num_arrays))
+    ax.set_xticklabels([f"{run.run_config.get_label(short=True)}" for run in runs])
+    ax.set_yticklabels([f"{run.run_config.get_label(short=True)}" for run in runs])
+
+    ax.tick_params(axis="x", labelrotation=80)
+    ax.xaxis.set_label_position("bottom")
+    ax.xaxis.tick_bottom()
+
+    plt.title("MSE Correlogram")
+    plt.savefig(output_path)
 
 
 def combine_csv_files(csv_files: list[str], output_path: str, filename: str):

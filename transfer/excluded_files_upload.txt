@@ -4,6 +4,7 @@ venv
 .idea
 logs/run*
 from-delftblue
+from-hertz
 transfer
 .DS_Store
 **/storage/*

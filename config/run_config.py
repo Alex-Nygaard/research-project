@@ -55,31 +55,35 @@ class RunConfig:
             scenario = "invalid"
         return scenario
 
-    def get_label(self):
+    def get_label(self, short: bool = False):
         combined = [
             self.batch_size,
             self.local_epochs,
             self.data_volume,
             self.data_labels,
         ]
+
         if self.option == "deployment":
-            tag = "Real"
-        elif all(["iid" == val for val in combined]):
+            return "Deployment" if not short else "Dep."
+
+        tag = ""
+        if all(["iid" == val for val in combined]):
             tag = "Blind"
         elif all(["noniid" == val for val in combined]):
             tag = "Real"
         elif self.batch_size == "noniid":
-            tag = "Batch size Non-IID"
+            tag = "Batch size Non-IID" if not short else "BS"
         elif self.local_epochs == "noniid":
-            tag = "Local Epochs Non-IID"
+            tag = "Local Epochs Non-IID" if not short else "LE"
         elif self.data_volume == "noniid":
-            tag = "Data volume Non-IID"
+            tag = "Data volume Non-IID" if not short else "DV"
         elif self.data_labels == "noniid":
-            tag = "Data labels Non-IID"
+            tag = "Data labels Non-IID" if not short else "DL"
         else:
             tag = "Invalid"
 
-        return f"{self.option.capitalize()} - {tag}"
+        option = self.option.capitalize() if not short else "Sim."
+        return f"{option} {tag}"
 
     def write_to_json(self, path: str, filename: str):
         full_path = os.path.join(path, filename)

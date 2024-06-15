@@ -1,6 +1,5 @@
 import json
 import os
-import pickle
 from typing import Optional
 import random
 
@@ -11,7 +10,6 @@ from datasets.utils.logging import disable_progress_bar
 from config.constants import DEVICE, LOG_DIR
 from client.network import Net, train, test, eval_learning
 from data.noniid_load_dataset import (
-    load_datasets,
     get_dirichlet_idxs,
     get_replicate_idxs,
     load_one_client,

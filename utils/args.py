@@ -58,6 +58,14 @@ def get_base_parser(description: str):
     )
 
     parser.add_argument(
+        "--server_address",
+        type=str,
+        default="",
+        nargs="?",
+        help="Server address.",
+    )
+
+    parser.add_argument(
         "--batch_size",
         type=str,
         choices=["iid", "noniid"],

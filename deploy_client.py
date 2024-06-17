@@ -15,6 +15,7 @@ if __name__ == "__main__":
     num_clients = args.num_clients
     # trace_file = args.trace_file
     client_config_file = args.client_config_file
+    server_address = args.server_address
     batch_size = args.batch_size
     local_epochs = args.local_epochs
     data_volume = args.data_volume
@@ -28,7 +29,7 @@ if __name__ == "__main__":
     logger.info(f"Starting client with partition_id={cid}")
 
     fl.client.start_client(
-        server_address="127.0.0.1:5040",
+        server_address=server_address,
         client_fn=get_client_fn(
             num_clients=num_clients,
             option="deployment",

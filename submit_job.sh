@@ -1,11 +1,11 @@
 #!/bin/bash
 
 #SBATCH --job-name="sim"
-#SBATCH --partition=gpu-a100
+#SBATCH --partition=compute
 #SBATCH --time=08:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=48
-#SBATCH --gpus-per-task=1
+#SBATCH --gpus-per-task=0
 #SBATCH --mem-per-cpu=3G
 #SBATCH --account=education-eemcs-courses-cse3000
 

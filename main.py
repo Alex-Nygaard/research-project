@@ -55,17 +55,22 @@ async def main(config: RunConfig):
             logger.info(f"Downloading dataset '{DATASET}'...")
             _download_data(DATASET, download=True)
 
-        server_task = asyncio.create_task(run_server(config))
-        logger.info("Server task started. Waiting 10 seconds to start clients...")
-        await asyncio.sleep(10)
-        client_tasks = []
+        tasks = []
+        if config.server_address == "":
+            # If server address is not given, start a local server
+            config.server_address = "127.0.0.1:5040"
+            server_task = asyncio.create_task(run_server(config))
+            tasks.append(server_task)
+            logger.info("Server task started. Waiting 10 seconds to start clients...")
+            await asyncio.sleep(10)
+
         for i in range(config.num_clients):
             client_task = asyncio.create_task(run_client(i, config))
-            client_tasks.append(client_task)
+            tasks.append(client_task)
             logger.info("Client %s task started.", i)
             await asyncio.sleep(0.5)
-        logger.info("All client tasks (%s) started.", len(client_tasks))
-        await asyncio.gather(server_task, *client_tasks)
+        logger.info("All client tasks started.")
+        await asyncio.gather(*tasks)
 
     logger.info("Main finished. Writing to disk...")
     config.write_to_json(LOG_DIR, "run_config.json")
@@ -80,6 +85,7 @@ async def run_client(cid: int, config: RunConfig):
         f"--num_clients={config.num_clients}",
         f"--trace_file={config.trace_file}",
         f"--client_config_file={config.client_config_file}",
+        f"--server_address={config.server_address}",
         f"--batch_size={config.batch_size}",
         f"--local_epochs={config.local_epochs}",
         f"--data_volume={config.data_volume}",
@@ -95,6 +101,7 @@ async def run_server(config: RunConfig):
         "python",
         "deploy_server.py",
         f"--num_clients={config.num_clients}",
+        f"--server_address={config.server_address}",
         f"--batch_size={config.batch_size}",
         f"--local_epochs={config.local_epochs}",
         f"--data_volume={config.data_volume}",
@@ -139,6 +146,7 @@ if __name__ == "__main__":
     option = args.option
     trace_file = args.trace_file
     # client_config_file = args.client_config_file
+    server_address = args.server_address
     batch_size = args.batch_size
     local_epochs = args.local_epochs
     data_volume = args.data_volume
@@ -150,6 +158,7 @@ if __name__ == "__main__":
         option=option,
         trace_file=trace_file,
         # client_config_file=client_config_file,
+        server_address=server_address,
         batch_size=batch_size,
         local_epochs=local_epochs,
         data_volume=data_volume,

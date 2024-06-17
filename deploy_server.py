@@ -15,21 +15,14 @@ if __name__ == "__main__":
     )
 
     parser = get_base_parser("Deploy an FL server.")
-
     args = parser.parse_args()
     num_clients = args.num_clients
-    batch_size = args.batch_size
-    local_epochs = args.local_epochs
-    data_volume = args.data_volume
-    data_labels = args.data_labels
+    server_address = args.server_address
 
-    logger.info(
-        f"Starting server with args: batch_size={batch_size}, local_epochs={local_epochs}, data_volume={data_volume}, data_labels={data_labels}"
-    )
     logger.info(f"NUM_ROUNDS: {NUM_ROUNDS}")
 
     history = fl.server.start_server(
-        server_address="127.0.0.1:5040",
+        server_address=server_address,
         config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
         strategy=get_strategy(min_available_clients=num_clients),
     )

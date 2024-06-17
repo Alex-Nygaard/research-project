@@ -203,14 +203,6 @@ def combine_csv_files(csv_files: list[str], output_path: str, filename: str):
         "sim_B-iid_E-iid_V-noniid_L-iid",
         "sim_B-iid_E-iid_V-iid_L-noniid",
         "sim_B-iid_E-iid_V-iid_L-iid",
-        # "dep_R-mid_C-mid_V-mid_Q-mid",
-        # "sim_R-mid_C-mid_V-mid_Q-mid",
-        # "sim_R-low_C-mid_V-mid_Q-mid",
-        # "sim_R-high_C-mid_V-mid_Q-mid",
-        # "sim_R-mid_C-low_V-mid_Q-mid",
-        # "sim_R-mid_C-high_V-mid_Q-mid",
-        # "sim_R-mid_C-mid_V-low_Q-mid",
-        # "sim_R-mid_C-mid_V-high_Q-mid",
     ]
 
     combined_df = pd.concat(dfs, ignore_index=True)

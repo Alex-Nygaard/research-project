@@ -274,56 +274,6 @@ def get_idxs_custom(
     return idx_clients, trainset, testset
 
 
-SEED = 42
-DATASET = "cifar10"
-NUM_CLIENTS = 50
-
-
-def replicate_clients(
-    datapoints_per_client: List[int],
-    labels_per_client: List[int],
-):
-    prng = np.random.default_rng(SEED)
-
-    label_indices = {
-        k: np.where(DATASET.targets == k)[0].tolist() for k in range(DATASET.classes)
-    }
-    for indices in label_indices.values():
-        prng.shuffle(indices)
-
-    idx_clients: List[List[int]] = [[] for _ in range(NUM_CLIENTS)]
-
-    for client_id, (num_samples, num_labels) in enumerate(
-        zip(datapoints_per_client, labels_per_client)
-    ):
-        selected_labels = prng.choice(range(DATASET.classes), num_labels, replace=False)
-        client_indices = []
-
-        for label in selected_labels:
-            count_needed = (num_samples // num_labels) + (
-                1 if num_samples % num_labels > 0 else 0
-            )
-            count_assigned = 0
-
-            while label_indices[label] and count_assigned < count_needed:
-                client_indices.append(label_indices[label].pop())
-                count_assigned += 1
-
-        prng.shuffle(client_indices)
-        idx_clients[client_id] = client_indices[:num_samples]
-
-    remaining_indices = [idx for indices in label_indices.values() for idx in indices]
-    prng.shuffle(remaining_indices)
-
-    for client_id in range(NUM_CLIENTS):
-        if len(idx_clients[client_id]) < datapoints_per_client[client_id]:
-            required = datapoints_per_client[client_id] - len(idx_clients[client_id])
-            idx_clients[client_id].extend(remaining_indices[:required])
-            remaining_indices = remaining_indices[required:]
-
-    return idx_clients
-
-
 def partition_data_custom(
     num_clients: int,
     datapoints_per_client: List[int],

@@ -1,5 +1,6 @@
 import os
 import asyncio
+import shutil
 from time import sleep
 import flwr as fl
 
@@ -21,6 +22,21 @@ fl.common.logger.configure(
 
 
 async def main(config: RunConfig):
+    """
+    Main function to handle simulation or deployment based on the provided configuration.
+
+    Parameters:
+    config (RunConfig): Configuration object containing parameters for running either
+                        simulation or deployment.
+
+    This function handles two main operations:
+    1. Simulation: Generates client configurations and starts the simulation.
+    2. Deployment: Generates or uses provided client configurations, downloads necessary data,
+                   and starts server and client tasks for deployment.
+
+    After completing the main tasks, the function writes the configuration to a JSON file
+    and increments the run counter.
+    """
     if config.option == "simulation":
         logger.info("Starting simulation...")
         logger.info("Generating client config...")
@@ -43,7 +59,6 @@ async def main(config: RunConfig):
 
         if config.trace_file == "":
             logger.info("Generating client config...")
-
             client_config_file = FlowerClient.generate_deployment_clients(
                 config.num_clients, output_path=os.path.join(LOG_DIR, "clients.json")
             )
@@ -51,6 +66,7 @@ async def main(config: RunConfig):
             config.client_config_file = client_config_file
         else:
             logger.info("Tracefile given, setting client config to it.")
+            shutil.copy(config.trace_file, os.path.join(LOG_DIR, "clients.json"))
             config.client_config_file = config.trace_file
             logger.info(f"Downloading dataset '{DATASET}'...")
             _download_data(DATASET, download=True)
@@ -78,6 +94,13 @@ async def main(config: RunConfig):
 
 
 async def run_client(cid: int, config: RunConfig):
+    """
+    Run a client process with the specified configuration in a subprocess.
+
+    Parameters:
+    cid (int): Client ID to uniquely identify the client instance.
+    config (RunConfig): Configuration object containing parameters for running the client.
+    """
     cmd = [
         "python",
         "deploy_client.py",
@@ -96,7 +119,12 @@ async def run_client(cid: int, config: RunConfig):
 
 
 async def run_server(config: RunConfig):
-    # Prepare the command
+    """
+    Run a server process with the specified configuration in a subprocess.
+
+    Parameters:
+    config (RunConfig): Configuration object containing parameters for running the server.
+    """
     cmd = [
         "python",
         "deploy_server.py",
@@ -112,6 +140,12 @@ async def run_server(config: RunConfig):
 
 
 async def run_simulation(config: RunConfig):
+    """
+    Run a simulation process with the specified configuration in a subprocess.
+
+    Parameters:
+    config (RunConfig): Configuration object containing parameters for running the simulation.
+    """
     cmd = [
         "python",
         "run_simulation.py",

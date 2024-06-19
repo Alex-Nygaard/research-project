@@ -2,7 +2,7 @@
 
 #SBATCH --job-name="sim"
 #SBATCH --partition=compute
-#SBATCH --time=08:00:00
+#SBATCH --time=10:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=48
 #SBATCH --gpus-per-task=0

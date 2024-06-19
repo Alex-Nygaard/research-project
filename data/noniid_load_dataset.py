@@ -74,7 +74,11 @@ def load_one_client(
         dataset, lengths, torch.Generator().manual_seed(seed)
     )
     return (
-        DataLoader(ds_train, batch_size=batch_size, shuffle=True),
+        DataLoader(
+            ds_train,
+            batch_size=batch_size,
+            shuffle=True,
+        ),
         DataLoader(ds_val, batch_size=batch_size),
     )
 
@@ -100,7 +104,13 @@ def load_all_clients(
         ds_train, ds_val = random_split(
             dataset, lengths, torch.Generator().manual_seed(seed)
         )
-        trainloaders.append(DataLoader(ds_train, batch_size=batch_size, shuffle=True))
+        trainloaders.append(
+            DataLoader(
+                ds_train,
+                batch_size=batch_size,
+                shuffle=True,
+            )
+        )
         valloaders.append(DataLoader(ds_val, batch_size=batch_size))
     return (
         trainloaders,
@@ -183,7 +193,13 @@ def load_datasets(
         ds_train, ds_val = random_split(
             dataset, lengths, torch.Generator().manual_seed(seed)
         )
-        trainloaders.append(DataLoader(ds_train, batch_size=batch_size, shuffle=True))
+        trainloaders.append(
+            DataLoader(
+                ds_train,
+                batch_size=batch_size,
+                shuffle=True,
+            )
+        )
         valloaders.append(DataLoader(ds_val, batch_size=batch_size))
     return (
         trainloaders,

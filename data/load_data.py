@@ -4,7 +4,7 @@ from typing import List
 import torch
 from torch.utils.data import DataLoader, random_split, Subset
 
-from .noniid_dataset_preparation import (
+from .load_data_prep import (
     get_dirichlet_info,
     get_custom_info,
     _download_data,

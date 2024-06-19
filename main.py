@@ -8,7 +8,7 @@ from client.client import FlowerClient
 from config.run_config import RunConfig
 from config.constants import LOG_DIR, RUN_ID, DATASET
 from config.structure import create_output_structure
-from data.noniid_dataset_preparation import _download_data
+from data.load_data_prep import _download_data
 from utils.args import get_base_parser
 from utils.run_counter import increment_run_counter
 from logger.logger import get_logger

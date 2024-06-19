@@ -83,13 +83,9 @@ class Metric:
 class History:
     def __init__(
         self,
-        # losses_distributed: List[Tuple[int, float]],
-        # losses_centralized: List[Tuple[int, float]],
         metrics_distributed: Dict[str, List[Tuple[int, float]]],
         metrics_centralized: Dict[str, List[Tuple[int, float]]],
     ):
-        # self.losses_distributed = losses_distributed
-        # self.losses_centralized = losses_centralized
         self.metrics_distributed = metrics_distributed
         self.metrics_centralized = metrics_centralized
 
@@ -144,8 +140,6 @@ class History:
         with open(filepath, "r") as file:
             data = json.load(file)
         return History(
-            # losses_distributed=data.get("losses_distributed", []),
-            # losses_centralized=data.get("losses_centralized", []),
             metrics_distributed=data.get("metrics_distributed", {}),
             metrics_centralized=data.get("metrics_centralized", {}),
         )
@@ -189,9 +183,22 @@ class RunData:
             raise ValueError("No deployment run found in list of runs")
 
         with open(os.path.join(path, filename), "w") as file:
-            file.write(
-                "code,max_acc,max_acc_round,acc_conv(80%),acc_conv(90%),min_loss,min_loss_round,loss_conv(80%),loss_conv(90%),mse,mae,dtw,pearson\n"
-            )
+            columns = [
+                "code",
+                "max_acc",
+                "max_acc_round",
+                "acc_conv(80%)",
+                "acc_conv(90%)",
+                "min_loss",
+                "min_loss_round",
+                "loss_conv(80%)",
+                "loss_conv(90%)",
+                "mse",
+                "mae",
+                "dtw",
+                "pearson",
+            ]
+            file.write(",".join(columns) + "\n")
             for run in runs:
                 accuracies = run.metrics.get("accuracy")
                 max_acc, max_acc_round = -1, -1
@@ -265,8 +272,6 @@ class RunData:
             mse_matrix,
             cmap="viridis",
             interpolation="nearest",
-            # xticklabels=labels,
-            # yticklabels=labels,
         )
         plt.colorbar(label="MSE")
         plt.title("MSE Heatmap")

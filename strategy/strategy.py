@@ -9,8 +9,8 @@ from datasets.utils.logging import disable_progress_bar
 from client.network import Net, test, eval_learning
 from client.client import fit_config
 from config.constants import DEVICE, DATASET
-from data.noniid_dataset_preparation import _download_data
-from data.noniid_load_dataset import load_validation_set
+from data.load_data_prep import _download_data
+from data.load_data import load_validation_set
 from logger.logger import get_logger
 
 disable_progress_bar()

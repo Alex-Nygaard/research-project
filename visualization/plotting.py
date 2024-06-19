@@ -17,7 +17,6 @@ from visualization.utils import (
 )
 
 plt.style.use(["science", "ieee"])
-
 logger = get_logger("visualization.plotting")
 
 

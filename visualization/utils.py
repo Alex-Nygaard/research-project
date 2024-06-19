@@ -1,7 +1,6 @@
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from fastdtw import fastdtw
 import numpy as np
-from scipy.spatial.distance import euclidean
 from scipy.stats import pearsonr
 
 

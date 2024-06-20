@@ -32,7 +32,7 @@ class Metric:
         "accuracy": {
             "batch_niid": Style(color="#577590", marker=""),
             "epoch_niid": Style(color="#31E981", marker=""),
-            "volume_niid": Style(color="#F3722C", marker=""),
+            "volume_niid": Style(color="#FFC0CB", marker=""),
             "label_niid": Style(color="#F9C74F", marker=""),
             "blind": Style(color="#17BEBB", marker=""),
             "real": Style(color="#8A1C7C", marker=""),

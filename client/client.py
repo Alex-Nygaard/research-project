@@ -205,6 +205,8 @@ class FlowerClient(NumPyClient):
         alpha: float = 0.5,
         seed: int = 42,
     ):
+        random.seed(seed)
+
         bs_opts = [16, 32, 64, 128]
         le_opts = [1, 3, 5, 7]
 

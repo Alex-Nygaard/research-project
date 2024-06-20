@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#python main.py --option="deployment" --num_clients=20  # --server_address="167.235.241.219:5040"
+num_clients=20
 
-python main.py --option="deployment" --num_clients=20 --trace_file="logs/clients/clients20_1001.json" --batch_size="noniid" --local_epochs="noniid" --data_volume="noniid" --data_labels="noniid"
-python main.py --option="deployment" --num_clients=20 --trace_file="logs/clients/clients20_1002.json" --batch_size="noniid" --local_epochs="noniid" --data_volume="noniid" --data_labels="noniid"
-python main.py --option="deployment" --num_clients=20 --trace_file="logs/clients/clients20_1003.json" --batch_size="noniid" --local_epochs="noniid" --data_volume="noniid" --data_labels="noniid"
-python main.py --option="deployment" --num_clients=20 --trace_file="logs/clients/clients20_1004.json" --batch_size="noniid" --local_epochs="noniid" --data_volume="noniid" --data_labels="noniid"
-python main.py --option="deployment" --num_clients=20 --trace_file="logs/clients/clients20_1005.json" --batch_size="noniid" --local_epochs="noniid" --data_volume="noniid" --data_labels="noniid"
-
+for seed in {1001..1005}
+do
+    echo "Running deployment with num_clients=$num_clients and seed=$seed..."
+    python main.py --option="deployment" --num_clients=$num_clients --trace_file="logs/clients/clients${num_clients}_${seed}.json" --batch_size="noniid" --local_epochs="noniid" --data_volume="noniid" --data_labels="noniid"
+    echo "Finished running deployment with num_clients=$num_clients and seed=$seed."
+done

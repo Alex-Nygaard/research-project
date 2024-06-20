@@ -171,3 +171,4 @@ data/MNIST
 data/cifar-10-batches-py
 niid_bench
 *.pdf
+.DS_Store

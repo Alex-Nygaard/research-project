@@ -66,7 +66,7 @@ class RunConfig:
         ]
 
         if self.option == "deployment":
-            return "Deployment" if not short else "Dep."
+            return "Deployment"  # if not short else "Dep."
 
         tag = ""
         if all(["iid" == val for val in combined]):

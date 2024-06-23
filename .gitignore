@@ -165,6 +165,7 @@ cython_debug/
 *.json
 run_counter.txt
 from-delftblue
+from-hertz
 *.png
 *.gz
 data/MNIST

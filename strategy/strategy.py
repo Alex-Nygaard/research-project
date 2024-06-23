@@ -9,7 +9,7 @@ from datasets.utils.logging import disable_progress_bar
 from client.network import Net, test, eval_learning
 from client.client import fit_config
 from config.constants import DEVICE, DATASET
-from data.load_data_prep import _download_data
+from data.load_data_prep import get_cifar
 from data.load_data import load_validation_set
 from logger.logger import get_logger
 
@@ -36,7 +36,7 @@ def evaluate_fn(
     model.set_parameters(parameters)
     model.eval()
 
-    test_loader = load_validation_set(DATASET, download=False)
+    test_loader = load_validation_set(download=False)
     loss, accuracy = test(model, test_loader)
 
     acc, rec, prec, f1 = eval_learning(model, test_loader)

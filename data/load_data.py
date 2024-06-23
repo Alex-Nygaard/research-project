@@ -1,24 +1,21 @@
-"""Partition the data and create the dataloaders."""
-
 from typing import List
 import torch
 from torch.utils.data import DataLoader, random_split, Subset
 
 from .load_data_prep import (
-    get_dirichlet_info,
-    get_custom_info,
-    _download_data,
+    dirichlet_distributions,
+    replicate_client_distributions,
+    get_cifar,
 )
 
 
 def get_dirichlet_idxs(
     num_clients: int,
     alpha: float = 0.5,
-    val_ratio: float = 0.1,
     seed: int = 42,
     download: bool = True,
 ):
-    idxs, data_volume, data_labels = get_dirichlet_info(
+    idxs, data_volume, data_labels = dirichlet_distributions(
         num_clients, alpha=alpha, seed=seed, download=download
     )
 
@@ -29,11 +26,10 @@ def get_replicate_idxs(
     num_clients: int,
     datapoints_per_client: List[int],
     labels_per_client: List[int],
-    val_ratio: float = 0.1,
     seed: int = 42,
     dowlnoad: bool = True,
 ):
-    idxs, data_volume, data_labels = get_custom_info(
+    idxs, data_volume, data_labels = replicate_client_distributions(
         num_clients,
         datapoints_per_client=datapoints_per_client,
         labels_per_client=labels_per_client,
@@ -44,15 +40,14 @@ def get_replicate_idxs(
     return idxs, data_volume, data_labels
 
 
-def load_one_client(
+def load_client_data(
     idx: List[int],
     batch_size: int,
-    dataset_name: str = "cifar10",
     download: bool = False,
     val_ratio: float = 0.1,
     seed: int = 42,
 ):
-    trainset, testset = _download_data(dataset_name, download=download)
+    trainset, testset = get_cifar(download=download)
 
     dataset = Subset(trainset, idx)
 
@@ -71,9 +66,6 @@ def load_one_client(
     )
 
 
-def load_validation_set(
-    dataset_name: str = "cifar10",
-    download: bool = False,
-):
-    _, testset = _download_data(dataset_name, download=download)
+def load_validation_set(download: bool = False):
+    _, testset = get_cifar(download=download)
     return DataLoader(testset, batch_size=32)

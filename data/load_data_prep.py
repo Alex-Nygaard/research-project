@@ -6,17 +6,27 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 from torch.autograd import Variable
 from torch.utils.data import Dataset
-from torchvision.datasets import CIFAR10, MNIST, FashionMNIST
+from torchvision.datasets import CIFAR10
 
 
-def get_idxs_custom(
+def replicate_client_distributions(
     num_clients: int,
     datapoints_per_client: List[int],
     labels_per_client: List[int],
     seed=42,
-    dataset_name="cifar10",
     download=False,
 ):
+    """
+    Get the indices of the data points for each client by replicating the distribution of the original dataset.
+
+    :param num_clients: Number of clients.
+    :param datapoints_per_client: Number of data points per client.
+    :param labels_per_client: Number of labels per client.
+    :param seed: Seed for the random number generator.
+    :param download: If True, download the dataset.
+    :return: Tuple of data indices, data volumes, and data labels.
+    """
+
     assert (
         len(datapoints_per_client) == num_clients
     ), "The length of datapoints_per_client must be equal to num_clients."
@@ -24,7 +34,7 @@ def get_idxs_custom(
         len(labels_per_client) == num_clients
     ), "The length of labels_per_client must be equal to num_clients."
 
-    trainset, testset = _download_data(dataset_name, download=download)
+    trainset, testset = get_cifar(download=download)
     prng = np.random.default_rng(seed)
 
     targets = trainset.targets
@@ -33,7 +43,6 @@ def get_idxs_custom(
     if isinstance(targets, torch.Tensor):
         targets = targets.numpy()
     num_classes = len(set(targets))
-    total_samples = len(trainset)
 
     # Create a mapping from each label to the corresponding indices
     label_indices = {k: np.where(targets == k)[0].tolist() for k in range(num_classes)}
@@ -72,44 +81,32 @@ def get_idxs_custom(
             idx_clients[client_id].extend(remaining_indices[:required])
             remaining_indices = remaining_indices[required:]
 
-    return idx_clients, trainset, testset
-
-
-def get_custom_info(
-    num_clients: int,
-    datapoints_per_client: List[int],
-    labels_per_client: List[int],
-    seed=42,
-    dataset_name="cifar10",
-    download=False,
-):
-    client_idxs, trainset, testset = get_idxs_custom(
-        num_clients,
-        datapoints_per_client,
-        labels_per_client,
-        seed=seed,
-        dataset_name=dataset_name,
-        download=download,
-    )
-    data_volume = [len(idxs) for idxs in client_idxs]
+    data_volume = [len(idxs) for idxs in idx_clients]
     data_labels = [
-        len(
-            set([ex[1] for ex in [trainset[idx] for idx in idxs]])
-        )  # | set([ex[1] for ex in testset]))
-        for idxs in client_idxs
+        len(set([ex[1] for ex in [trainset[idx] for idx in idxs]]))
+        for idxs in idx_clients
     ]
-    return client_idxs, data_volume, data_labels
+
+    return idx_clients, data_volume, data_labels
 
 
-def get_dirichlet_info(
-    num_clients, alpha, seed=42, dataset_name="cifar10", download=True
-):
-    trainset, testset = _download_data(dataset_name, download=download)
+def dirichlet_distributions(num_clients, alpha, seed=42, download=True):
+    """
+    Get the indices of the data points for each client using a Dirichlet distribution.
+
+    Adapted from https://github.com/adap/flower/blob/main/baselines/niid_bench/niid_bench/dataset_preparation.py
+
+    :param num_clients: Number of clients.
+    :param alpha: Alpha parameter of the Dirichlet distribution.
+    :param seed: Seed for the random number generator.
+    :param download: If True, download the dataset.
+    :return: Tuple of data indices, data volumes, and data labels.
+    """
+    trainset, testset = get_cifar(download=download)
     min_required_samples_per_client = 10
     min_samples = 0
     prng = np.random.default_rng(seed)
 
-    # get the targets
     tmp_t = trainset.targets
     if isinstance(tmp_t, list):
         tmp_t = np.array(tmp_t)
@@ -139,22 +136,20 @@ def get_dirichlet_info(
 
     data_volume = [len(idx_j) for idx_j in idx_clients]
     data_labels = [
-        len(
-            set([ex[1] for ex in [trainset[idx] for idx in idxs]])
-            # | set([ex[1] for ex in testset])
-        )
+        len(set([ex[1] for ex in [trainset[idx] for idx in idxs]]))
         for idxs in idx_clients
     ]
     return idx_clients, data_volume, data_labels
 
 
-def _download_data(dataset_name="cifar10", download=True) -> Tuple[Dataset, Dataset]:
-    """Download the requested dataset. Currently supports cifar10, mnist, and fmnist.
+def get_cifar(download=True) -> Tuple[Dataset, Dataset]:
+    """
+    Load the CIFAR10 dataset.
 
-    Returns
-    -------
-    Tuple[Dataset, Dataset]
-        The training dataset, the test dataset.
+    Adapted from https://github.com/adap/flower/blob/main/baselines/niid_bench/niid_bench/dataset_preparation.py
+
+    :param download: If True, download the dataset.
+    :return: Tuple of train and test datasets.
     """
     trainset, testset = None, None
 
@@ -164,87 +159,38 @@ def _download_data(dataset_name="cifar10", download=True) -> Tuple[Dataset, Data
         root = f"/tmp/{slurm_job_id}/data"
         os.makedirs(root, exist_ok=True)
 
-    if dataset_name == "cifar10":
-        transform_train = transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Lambda(
-                    lambda x: F.pad(
-                        Variable(x.unsqueeze(0), requires_grad=False),
-                        (4, 4, 4, 4),
-                        mode="reflect",
-                    ).data.squeeze()
-                ),
-                transforms.ToPILImage(),
-                transforms.RandomCrop(32),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-            ]
-        )
-        transform_test = transforms.Compose(
-            [
-                transforms.ToTensor(),
-            ]
-        )
-        trainset = CIFAR10(
-            root=root,
-            train=True,
-            download=download,
-            transform=transform_train,
-        )
-        testset = CIFAR10(
-            root=root,
-            train=False,
-            download=download,
-            transform=transform_test,
-        )
-    elif dataset_name == "mnist":
-        transform_train = transforms.Compose(
-            [
-                transforms.ToTensor(),
-            ]
-        )
-        transform_test = transforms.Compose(
-            [
-                transforms.ToTensor(),
-            ]
-        )
-        trainset = MNIST(
-            root=root,
-            train=True,
-            download=download,
-            transform=transform_train,
-        )
-        testset = MNIST(
-            root=root,
-            train=False,
-            download=download,
-            transform=transform_test,
-        )
-    elif dataset_name == "fmnist":
-        transform_train = transforms.Compose(
-            [
-                transforms.ToTensor(),
-            ]
-        )
-        transform_test = transforms.Compose(
-            [
-                transforms.ToTensor(),
-            ]
-        )
-        trainset = FashionMNIST(
-            root=root,
-            train=True,
-            download=download,
-            transform=transform_train,
-        )
-        testset = FashionMNIST(
-            root=root,
-            train=False,
-            download=download,
-            transform=transform_test,
-        )
-    else:
-        raise NotImplementedError
+    transform_train = transforms.Compose(
+        [
+            transforms.ToTensor(),
+            transforms.Lambda(
+                lambda x: F.pad(
+                    Variable(x.unsqueeze(0), requires_grad=False),
+                    (4, 4, 4, 4),
+                    mode="reflect",
+                ).data.squeeze()
+            ),
+            transforms.ToPILImage(),
+            transforms.RandomCrop(32),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+        ]
+    )
+    transform_test = transforms.Compose(
+        [
+            transforms.ToTensor(),
+        ]
+    )
+    trainset = CIFAR10(
+        root=root,
+        train=True,
+        download=download,
+        transform=transform_train,
+    )
+    testset = CIFAR10(
+        root=root,
+        train=False,
+        download=download,
+        transform=transform_test,
+    )
 
     return trainset, testset

@@ -6,9 +6,9 @@ import flwr as fl
 
 from client.client import FlowerClient
 from config.run_config import RunConfig
-from config.constants import LOG_DIR, RUN_ID, DATASET
+from config.constants import LOG_DIR, RUN_ID
 from config.structure import create_output_structure
-from data.load_data_prep import _download_data
+from data.load_data_prep import get_cifar
 from utils.args import get_base_parser
 from utils.run_counter import increment_run_counter
 from logger.logger import get_logger
@@ -68,8 +68,8 @@ async def main(config: RunConfig):
             logger.info("Tracefile given, setting client config to it.")
             shutil.copy(config.trace_file, os.path.join(LOG_DIR, "clients.json"))
             config.client_config_file = config.trace_file
-            logger.info(f"Downloading dataset '{DATASET}'...")
-            _download_data(DATASET, download=True)
+            logger.info(f"Downloading dataset...")
+            get_cifar(download=True)
 
         tasks = []
         if config.server_address == "":

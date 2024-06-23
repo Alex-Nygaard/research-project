@@ -12,7 +12,7 @@ from client.network import Net, train, test, eval_learning
 from data.load_data import (
     get_dirichlet_idxs,
     get_replicate_idxs,
-    load_one_client,
+    load_client_data,
 )
 from logger.logger import get_logger
 
@@ -271,7 +271,7 @@ def get_client_fn(
             cid,
         )
 
-        train_dl, test_dl = load_one_client(idxs, batch, download=False)
+        train_dl, test_dl = load_client_data(idxs, batch, download=False)
         client = FlowerClient(
             cid,
             batch_size=batch,

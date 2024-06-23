@@ -31,13 +31,7 @@ if __name__ == "__main__":
     fl.client.start_client(
         server_address=server_address,
         client_fn=get_client_fn(
-            num_clients=num_clients,
-            option="deployment",
             client_config_file=client_config_file,
-            batch_sizes=batch_size,
-            local_epochs=local_epochs,
-            data_volume=data_volume,
-            data_labels=data_labels,
             deployment_id=cid,
         ),
     )

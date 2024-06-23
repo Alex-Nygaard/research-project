@@ -1,15 +1,13 @@
 from typing import Dict
 import numpy as np
 import torch
-from torch.utils.data import DataLoader
 from flwr.common import Scalar
 import flwr as fl
 from datasets.utils.logging import disable_progress_bar
 
 from client.network import Net, test, eval_learning
 from client.client import fit_config
-from config.constants import DEVICE, DATASET
-from data.load_data_prep import get_cifar
+from config.constants import DEVICE
 from data.load_data import load_validation_set
 from logger.logger import get_logger
 

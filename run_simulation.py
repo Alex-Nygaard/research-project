@@ -45,14 +45,7 @@ if __name__ == "__main__":
         num_clients=num_clients,
         config=fl.server.ServerConfig(num_rounds=NUM_ROUNDS),
         client_fn=get_client_fn(
-            num_clients=num_clients,
-            option="simulation",
-            # trace_file=trace_file,
             client_config_file=client_config_file,
-            batch_sizes=batch_size,
-            local_epochs=local_epochs,
-            data_volume=data_volume,
-            data_labels=data_labels,
         ),
         strategy=get_strategy(),
         ray_init_args={

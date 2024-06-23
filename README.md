@@ -63,5 +63,3 @@ The project has been tested for Python `3.9.13`.
 6. Visualize results by opening the `visualize.ipynb` notebook with Jupyter Lab or Notebook.
 
 Alternatively, you can run `bash dep_locally.sh` or `bash sim_locally.sh` to run the deployment or simulation locally, respectively. You will still need a Python environment for this.
-
-TODO generate clients

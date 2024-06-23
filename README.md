@@ -12,7 +12,7 @@ _Supervisor: **Bart Cox**_
 
 ### Research question
 
-**Improving the Accuracy of Federated Learning Simulators**
+**Improving the Accuracy of Federated Learning Simulations**
 
 Using Traces from Real-world Deployments to Enhance the Realism of Simulation Environments
 
